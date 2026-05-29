@@ -447,7 +447,7 @@ function StepSpending({
           min={0}
           placeholder="0"
           prefix="$"
-          hint="Taxable investment accounts"
+          hint="Taxable investment accounts — e.g. Fidelity, Schwab, Robinhood"
           optional
           value={form.brokerageAccounts}
           onChange={(e) => set("brokerageAccounts", e.target.value)}

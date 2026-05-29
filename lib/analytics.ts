@@ -25,6 +25,7 @@ export type AnalyticsEvent =
   | "tool_opened"
   | "freedom_age_slider_used"
   | "learn_module_opened"
+  | "learn_module_completed"
   | "checkup_edited";
 
 /** Property values we allow — primitives only, no objects/PII blobs. */
