@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { formatCurrencyFull } from "@/lib/calculations";
+import { track } from "@/lib/analytics";
 import type { FreedomAgeResult } from "@/lib/types";
 
 interface Props {
@@ -82,6 +83,15 @@ export function FreedomAgeCard({
 
   // Spending adjustment state — expressed as monthly reduction ($)
   const [spendingReduction, setSpendingReduction] = useState(0);
+  const sliderTracked = useRef(false);
+
+  function handleSpendingReduction(value: number) {
+    setSpendingReduction(value);
+    if (value > 0 && !sliderTracked.current) {
+      sliderTracked.current = true; // fire once per mount, not per tick
+      track("freedom_age_slider_used");
+    }
+  }
 
   const adjustedSpending = Math.max(0, monthlySpending - spendingReduction);
   const adjusted = useMemo(
@@ -250,7 +260,7 @@ export function FreedomAgeCard({
               max={Math.max(100, Math.floor((monthlySpending - 100) / 100) * 100)}
               step={100}
               value={spendingReduction}
-              onChange={(e) => setSpendingReduction(Number(e.target.value))}
+              onChange={(e) => handleSpendingReduction(Number(e.target.value))}
               className="w-full h-2 rounded-full appearance-none cursor-pointer accent-blue-500"
               style={{ background: `linear-gradient(to right, #3b82f6 ${(spendingReduction / Math.max(100, Math.floor((monthlySpending - 100) / 100) * 100)) * 100}%, #e2e8f0 0%)` }}
             />

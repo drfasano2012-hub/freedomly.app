@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppNav } from "@/components/AppNav";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { calcAllMetrics } from "@/lib/calculations";
+import { track } from "@/lib/analytics";
 import { CoastFireTool } from "@/components/tools/CoastFireTool";
 import { CompoundGrowthTool } from "@/components/tools/CompoundGrowthTool";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,11 @@ type ToolId = (typeof TOOLS)[number]["id"];
 export default function ToolsPage() {
   const [activeTab, setActiveTab] = useState<ToolId>("coast-fire");
   const { inputs } = useFinancialData();
+
+  // Track each tool the user opens (initial + tab switches)
+  useEffect(() => {
+    track("tool_opened", { tool: activeTab });
+  }, [activeTab]);
 
   // Pre-populate tool inputs from checkup data if available
   const metrics = inputs ? calcAllMetrics(inputs) : null;

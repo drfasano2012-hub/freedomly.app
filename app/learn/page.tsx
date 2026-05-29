@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, Star, Clock } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import { LEARN_MODULES, type LearnTag } from "@/content/learn";
 
 const ALL_TAGS: LearnTag[] = ["Foundation", "Debt", "Investing", "FIRE"];
@@ -23,7 +24,10 @@ export default function LearnPage() {
     setOpenIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else {
+        next.add(id);
+        track("learn_module_opened", { module_id: id });
+      }
       return next;
     });
   }

@@ -52,7 +52,16 @@ Last verified: **2026-05-29**.
 
 - Project imported from the GitHub repo via **Add New → Project** (signed in with GitHub).
 - **Framework preset:** Next.js (auto-detected). Build settings left at defaults.
-- **Environment variables:** none required (app is fully client-side, data in `localStorage`).
+- **Environment variables:** the app runs with none, but analytics needs two
+  (optional — if unset, PostHog simply doesn't initialize and the app works fine):
+  | Var | Example | Notes |
+  |-----|---------|-------|
+  | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_…` | PostHog project API key (public/client key) |
+  | `NEXT_PUBLIC_POSTHOG_HOST` | `https://us.i.posthog.com` | PostHog host (US or EU) |
+
+  Set these in **Vercel → Settings → Environment Variables** (Production) and in a
+  local `.env.local` for dev. `NEXT_PUBLIC_` keys are exposed to the browser by
+  design — never put secrets in a `NEXT_PUBLIC_` var. See `ANALYTICS.md`.
 - **Continuous deployment:**
   - Push to `main` → Vercel builds & deploys to production automatically (~1 min).
   - Pull requests get their own preview URLs.

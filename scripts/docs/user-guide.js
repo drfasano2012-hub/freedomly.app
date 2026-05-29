@@ -132,6 +132,7 @@ const children = [
   bullet("No surplus — spending meets or exceeds income; create any positive surplus first"),
   bullet("50+ years out — surplus too small relative to FI Number; grow income or cut spending"),
   bullet("Normal — you have a projected freedom age with years remaining"),
+  p("Your projection is based on your current monthly spending. A built-in spending-reduction slider lets you see how cutting expenses pulls your freedom age earlier — drag it to model \"what if I spent less?\" scenarios in real time."),
   space(),
   h2("Financial Snapshot"),
   p("Four key numbers at a glance: Net Worth, Savings Rate, Emergency Fund Coverage, Monthly Surplus."),
@@ -162,10 +163,10 @@ const children = [
 
   h1("3. Financial Tools"),
   // ✏️ Update if tools are added/removed (see app/tools/page.tsx)
-  p("Three standalone calculators, each pre-fillable from your checkup data:"),
+  p("Two standalone calculators, each pre-fillable from your checkup data:"),
   space(),
   h2("Coast FIRE Calculator"),
-  p("How much you need invested today to coast to financial independence without additional contributions."),
+  p("How much you need invested today to coast to financial independence without additional contributions. FIRE = Financial Independence, Retire Early; \"Coast FIRE\" is the point where your existing investments will compound to your full FI number by retirement age with no further contributions."),
   bullet("Enter: current age, target retirement age, annual expenses in retirement, current invested amount"),
   bullet("Output: coast number, current gap, monthly amount to close the gap"),
   space(),
@@ -173,11 +174,6 @@ const children = [
   p("How your investments grow over time — with a year-by-year bar chart."),
   bullet("Enter: starting amount, monthly contribution, annual return rate, number of years"),
   bullet("Output: final portfolio value, total contributed, total interest earned"),
-  space(),
-  h2("Emergency Fund Calculator"),
-  p("A concrete savings plan to reach your 3–6 month target."),
-  bullet("Enter: monthly expenses, current savings, monthly amount you can set aside"),
-  bullet("Output: target (3mo and 6mo), current gap, months to reach goal"),
   space(),
 
   h1("4. Learn"),

@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { calcAllMetrics } from "@/lib/calculations";
+import { track } from "@/lib/analytics";
 import { AppNav } from "@/components/AppNav";
 import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
 import { FreedomAgeCard } from "@/components/dashboard/FreedomAgeCard";
@@ -35,6 +36,10 @@ export default function DashboardPage() {
     () => (inputs ? calcAllMetrics(inputs) : null),
     [inputs]
   );
+
+  useEffect(() => {
+    if (hydrated && hasCompletedCheckup) track("dashboard_viewed");
+  }, [hydrated, hasCompletedCheckup]);
 
   if (!hydrated || !inputs || !metrics) {
     return (

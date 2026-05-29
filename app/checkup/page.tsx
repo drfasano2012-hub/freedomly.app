@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, TrendingUp } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { getSampleData } from "@/lib/calculations";
+import { track } from "@/lib/analytics";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -116,6 +117,12 @@ export default function CheckupPage() {
     }
   }, [hydrated]); // intentionally run once on hydration
 
+  // Track checkup entry once on hydration (new vs. editing)
+  useEffect(() => {
+    if (!hydrated) return;
+    track(inputs ? "checkup_edited" : "checkup_started");
+  }, [hydrated]); // intentionally run once on hydration
+
   // ── Field helpers
 
   function set(field: keyof FormData, value: string) {
@@ -150,6 +157,7 @@ export default function CheckupPage() {
   function loadSampleData() {
     setForm(sampleToForm(getSampleData()));
     setErrors({});
+    track("sample_data_used");
   }
 
   // ── Validation
@@ -177,6 +185,7 @@ export default function CheckupPage() {
 
   function next() {
     if (!validateStep(step)) return;
+    track("checkup_step_completed", { step });
     if (step < 5) setStep((s) => s + 1);
     else submit();
   }
@@ -213,6 +222,12 @@ export default function CheckupPage() {
     };
 
     setInputs(inputs);
+    // Activation event. NOTE: no financial values — count + flags only.
+    track("checkup_completed", {
+      debt_count: inputs.debts.length,
+      goal_count: inputs.goals.length,
+      risk: inputs.riskTolerance,
+    });
     router.push("/dashboard");
   }
 

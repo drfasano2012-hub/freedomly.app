@@ -1,6 +1,6 @@
 /**
  * Freedomly — generate-all.js
- * Regenerates all 4 documents in parallel.
+ * Regenerates all documents in parallel.
  *
  * Usage:
  *   npm run update-docs
@@ -15,6 +15,8 @@ const SCRIPTS = [
   "prd.js",
   "user-guide.js",
   "sales-guide.js",
+  "roadmap.js",
+  "business-model.js",
 ];
 
 const dir = __dirname;
