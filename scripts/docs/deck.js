@@ -25,7 +25,7 @@ const CARD    = "162040";
 let pres = new pptxgen();
 pres.layout  = "LAYOUT_16x9";
 pres.author  = "Freedomly";
-pres.title   = "Freedomly — Map Your Path to Financial Freedom";
+pres.title   = "Freedomly — Your Financial Direction System";
 
 // ─── SLIDE 1 — TITLE ───────────────────────────────────────────
 {
@@ -39,17 +39,17 @@ pres.title   = "Freedomly — Map Your Path to Financial Freedom";
   s.addShape(pres.shapes.RECTANGLE, { x: 0.7, y: 1.95, w: 0.5, h: 0.08,
     fill: { color: EMERALD }, line: { color: EMERALD } });
 
-  s.addText("FINANCIAL FREEDOM PLATFORM", {
+  s.addText("FINANCIAL DIRECTION SYSTEM", {
     x: 1.3, y: 1.7, w: 7, h: 0.4, fontSize: 9, fontFace: "Calibri",
     bold: true, color: EMERALD, charSpacing: 4, align: "left", margin: 0 });
   s.addText("Freedomly", {
     x: 0.7, y: 2.1, w: 8.6, h: 1.3, fontSize: 72, fontFace: "Calibri",
     bold: true, color: WHITE, align: "left", margin: 0 });
-  s.addText("Map Your Path to Financial Freedom", {
+  s.addText("A financial direction system", {
     x: 0.7, y: 3.5, w: 8, h: 0.6, fontSize: 22, fontFace: "Calibri",
     color: "a5b4fc", align: "left", margin: 0 });
-  s.addText("Know your number.  Build your plan.  Reach freedom.", {
-    x: 0.7, y: 4.2, w: 8, h: 0.5, fontSize: 13, fontFace: "Calibri",
+  s.addText("Know where you stand, where you're headed, and what to do next.", {
+    x: 0.7, y: 4.2, w: 8.6, h: 0.5, fontSize: 13, fontFace: "Calibri",
     color: SLATE, align: "left", italic: true, margin: 0 });
   s.addText("freedomly.app", {
     x: 7.5, y: 5.1, w: 2.2, h: 0.3, fontSize: 9, fontFace: "Calibri",
@@ -172,7 +172,7 @@ pres.title   = "Freedomly — Map Your Path to Financial Freedom";
 
   const rows = [
     { headline: "Not a budgeting app.",
-      body: "Freedomly is a freedom planning platform. We don't track every latte — we show you the path to financial independence." },
+      body: "Freedomly is a financial direction system. We don't track every latte — we show you where you stand, where you're headed, and what to do next." },
     { headline: "Coaching-ready.",
       body: "Built for financial coaches to use with clients. Invite clients, review their numbers together, track progress over time." },
     { headline: "Education-first.",

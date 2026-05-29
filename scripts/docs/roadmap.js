@@ -74,15 +74,15 @@ pres.title  = "Freedomly Product Roadmap";
         "✓  Portfolio Allocation Quiz",
         "✓  Local data persistence",
       ] },
-    { x: 3.50, accent: BLUE, label: "NEXT", header: "Foundation + Retention", sub: "Phase 1 · Q3 2025",
+    { x: 3.50, accent: BLUE, label: "NEXT", header: "Habit Loop + Foundation", sub: "Phase 1 · Q3 2025",
       items: [
         "→  User accounts (magic-link auth)",
         "→  Cloud storage + migrate local data",
-        "→  Net-worth & metric tracking over time",
-        "→  Net-worth TREND CHART (the comeback hook)",
-        "→  Milestone badges + monthly check-in email",
-        "→  Dashboard export (PDF) — share / coaching",
-        "→  Analytics + A/B testing (PostHog)",
+        "→  Net-worth tracking + trend chart over time",
+        "→  Streaks, XP & levels — daily money habit",
+        "→  Guided learning path (bite-sized, Duolingo-style)",
+        "→  Milestone badges + smart reminders / nudges",
+        "→  Dashboard export (PDF) + analytics (PostHog)",
         "→  More tools (debt payoff, raise impact)",
       ] },
     { x: 6.62, accent: SLATE, label: "LATER", header: "Coaching + Scale", sub: "Phase 2–3 · 2026",
@@ -90,11 +90,11 @@ pres.title  = "Freedomly Product Roadmap";
         "○  Coach portal — view client dashboards",
         "○  Comment on / co-fill a client's checkup",
         "○  Client ↔ coach messaging",
+        "○  Leaderboards / leagues (opt-in, anonymized)",
         "○  CSV import → auto-extract expenses",
         "○  Plaid bank / account linking",
         "○  Coach licensing (CFPs & RIAs) + white-label",
         "○  Mobile app + milestone social sharing",
-        "○  Full statement upload & parsing (if needed)",
       ] },
   ];
 
@@ -135,8 +135,8 @@ pres.title  = "Freedomly Product Roadmap";
 
   const BW = 4.42, BH = 1.86, GX = 0.38, GX2 = 5.1, RY = 0.92, RY2 = 2.92;
   const bets = [
-    { x: GX,  y: RY,  accent: EMERALD, n: "1", title: "The Retention Engine",
-      body: "account → periodic update → net-worth trend → badge → email nudge → return. A checkup is low-frequency; progress-over-time is what brings people back. Build this first." },
+    { x: GX,  y: RY,  accent: EMERALD, n: "1", title: "‘Duolingo for Money’ Habit Loop",
+      body: "Turn finance from a yearly chore into a daily habit: streaks, XP, levels, bite-sized lessons, milestone celebrations. Open → small win → streak grows → return tomorrow. This IS the retention engine — build it first." },
     { x: GX2, y: RY,  accent: BLUE, n: "2", title: "The Coaching Platform",
       body: "Stacked in layers: view client dashboard → comment async → co-fill together → message. The revenue engine. Start with view + comments; messaging comes last." },
     { x: GX,  y: RY2, accent: "A78BFA", n: "3", title: "Frictionless Data Entry",

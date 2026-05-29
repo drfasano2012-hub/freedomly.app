@@ -105,9 +105,9 @@ const children = [
   space(),
 
   h1("1. Executive Summary"),
-  p("Freedomly is a financial freedom planning platform that helps individuals understand their financial health, benchmark their progress against data-driven standards, and build a personalized action plan to reach financial independence."),
+  p("Freedomly is a financial direction system that helps individuals understand where they stand, see where they are headed, and know the highest-impact next move on the path to financial independence — with their position benchmarked against data-driven standards. Most tools answer only the first question (Where am I?); Freedomly answers all three: Where am I? Where am I going? What's my next move?"),
   p("The MVP is a fully client-side application — no backend, no auth, all calculations run in the browser with data persisted in localStorage. Users complete a 5-step financial checkup and receive a comprehensive dashboard including a health score, freedom age projection, net worth benchmarks, portfolio allocation recommendation, and a prioritized action plan."),
-  p("The platform also includes 3 financial calculators (Coast FIRE, Compound Growth, Emergency Fund) and 11 educational learning modules covering savings, debt, investing, FIRE principles, and the stock market."),
+  p("The platform also includes 2 financial calculators (Coast FIRE, Compound Growth) and 11 educational learning modules covering savings, debt, investing, FIRE principles, and the stock market."),
   space(),
 
   h1("2. Problem Statement"),

@@ -175,7 +175,7 @@ const children = [
   space(240),
   callout([
     { text: "The one-sentence pitch:", bold: true, size: 20, color: NAVY },
-    { text: "Freedomly is the only platform that turns your raw financial numbers into a complete freedom plan — health score, benchmarks, freedom age projection, and a personalized action plan — in 5 minutes, free, no login required.", size: 22 }
+    { text: "Freedomly is the only platform that turns your scattered financial numbers into clear direction — where you stand, where you're headed, and your highest-impact next move — in 5 minutes, free, no login required.", size: 22 }
   ], LIGHT, EMERALD),
   space(240), pb(),
 
@@ -305,7 +305,7 @@ const children = [
   // ─── 4. THE FREEDOMLY DIFFERENCE ────────────────────────────
   h1("4. The Freedomly Difference"),
   h2("4.1 Complete Picture vs. Partial View"),
-  p("Budgeting apps show you where your money went. Investment platforms help you put money to work. Freedomly shows you the full picture — income, spending, savings, debt, investments, net worth, and the path to financial freedom — in one place, calculated instantly."),
+  p("Budgeting apps show you where your money went. Investment platforms help you put money to work. Freedomly answers the questions they don't — where you stand, where you're headed, and what to do next — in one place, calculated instantly."),
   space(80),
   compTable(["", "Mint / YNAB", "Personal Capital", "NerdWallet", "Freedomly"], [
     ["Track spending",           { text: "Yes", mark: "yes" },     { text: "Yes", mark: "yes" },      { text: "Partial", mark: "partial" }, { text: "Not the focus", mark: "no" }],

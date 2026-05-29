@@ -9,6 +9,23 @@ See `PROCESS.md` for how changes get made and shipped.
 
 ## 2026-05-29
 
+- **Positioning / homepage:** Repositioned Freedomly as a **financial direction
+  system** (category: "financial direction" — the layer above tracking). Rebuilt
+  the homepage (`app/page.tsx`) around the three questions — Where am I? Where am I
+  going? What's my next move? — with 10 sections (hero, problem, why tools fail, the
+  difference, snapshot, trajectory/FI, decision engine, how it works, trust, final
+  CTA) and product-preview mocks. Added `POSITIONING.md` (positioning, hero spec,
+  homepage blueprint, product strategy, competitive analysis).
+- **Docs:** Aligned the generators (deck, PRD, sales guide) to the "financial
+  direction" positioning; fixed a stale "3 calculators / Emergency Fund" reference
+  in the PRD. Regenerated all 6 docs.
+- **Roadmap:** Added the "Duolingo for Money" gamification thread — streaks, XP,
+  levels, guided learning path (Next); leaderboards/leagues (Later); reframed Big
+  Bet #1 around the daily habit loop.
+- **Learn:** Added per-module completion tracking (checkboxes + progress bar,
+  localStorage-persisted) and a `learn_module_completed` event.
+- **Checkup:** Added brokerage examples (Fidelity, Schwab, Robinhood) to the input
+  hint.
 - **Analytics:** Integrated PostHog — `app/providers.tsx` (init + App Router
   pageview tracking, autocapture off, session-replay input masking on),
   `lib/analytics.ts` (typed `track()` gate enforcing the no-financial-PII rule).
