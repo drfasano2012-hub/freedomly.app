@@ -175,7 +175,7 @@ const children = [
   space(240),
   callout([
     { text: "The one-sentence pitch:", bold: true, size: 20, color: NAVY },
-    { text: "Freedomly is the only platform that turns your scattered financial numbers into clear direction — where you stand, where you're headed, and your highest-impact next move — in 5 minutes, free, no login required.", size: 22 }
+    { text: "Freedomly is a financial system that gives you clarity on your money — so you stress less, know exactly where you're headed, and unlock your freedom. It turns scattered numbers into a clear plan in 5 minutes, free, no login required.", size: 22 }
   ], LIGHT, EMERALD),
   space(240), pb(),
 

@@ -26,7 +26,8 @@ export type AnalyticsEvent =
   | "freedom_age_slider_used"
   | "learn_module_opened"
   | "learn_module_completed"
-  | "checkup_edited";
+  | "checkup_edited"
+  | "home_simulator_used";
 
 /** Property values we allow — primitives only, no objects/PII blobs. */
 type SafeProps = Record<string, string | number | boolean | undefined>;

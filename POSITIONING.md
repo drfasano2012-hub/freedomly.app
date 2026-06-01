@@ -3,6 +3,11 @@
 > Working strategy doc. Local/draft for review. The implemented homepage lives in
 > `app/page.tsx`.
 
+**The hook (primary positioning):** *Freedomly is a financial system that gives you
+clarity on your money — so you can stress less, know exactly where you need to go, and
+unlock your freedom.*
+Short form: **Clarity on your money. Freedom in your life.**
+
 **The one-line category:** Freedomly is a **financial direction system** — it answers
 *Where am I? Where am I going? What's my next move?* Most tools answer only the first.
 
@@ -231,3 +236,66 @@ and update within 30 days** (proof the direction is sticky).
 **"Financial direction"** (or "financial GPS") — the layer above tracking. Tracking apps
 tell you where you are; Freedomly tells you **where you're headed and what to do next.**
 Own the sentence: *"Every other app tracks your money. Freedomly directs it."*
+
+---
+
+# Homepage Review & Optimization (v2 — optionality pass)
+
+Review of the shipped homepage. Verdict: structure is strong; the gap was that the
+**emotional payoff (optionality) was under-expressed.** Targeted fixes applied — no redesign.
+
+## Positioning scorecard (1–10)
+| Dimension | Score | Why |
+|---|---|---|
+| Clarity | 8 | Three-question frame + "financial direction system" is clear and ownable. |
+| Differentiation | 8 | "Direction, not data" + Decision Engine separate it from trackers. |
+| Trust | 7 | No bank linking + sourced benchmarks land; lacks real testimonials/usage proof. |
+| Emotional resonance | 5 → 7 | Was the weak spot — heavy on mechanism (FI date), light on *why it matters*. Optionality section added. |
+| Conversion potential | 7 | Strong CTAs + product mocks; will rise as optionality + proof improve. |
+
+**Biggest positioning gap (pre-fix):** the site sold *financial independence* (a number/date)
+but not *optionality* (the life it buys). Clarity is the mechanism; optionality is the outcome —
+the homepage now ends on that.
+
+## Hero — 5 options (recommended pair implemented)
+**Headlines**
+1. Know where you stand, where you're headed, and what to do next. *(kept — strongest for clarity)*
+2. Turn financial clarity into more options.
+3. Money is the mechanism. Freedom is the point.
+4. Stop guessing whether you're on track.
+5. Clarity today. Direction tomorrow. Options for life.
+
+**Subheadlines**
+1. *(implemented)* Freedomly turns your scattered finances into clear decisions and a path to financial independence — so money creates options, not limits.
+2. For people who earn well, save, and still wonder: am I actually on track — and what could I do with more freedom?
+3. See where you stand, where you're headed, and your highest-impact next move — in 5 minutes, no bank linking.
+4. Less financial data. More financial direction.
+5. The clearest read on whether you're on track for the life you want.
+
+**CTA:** primary `See where you stand →` · secondary `Try it with sample numbers`
+**Credibility:** No account or bank linking required · Benchmarked against Federal Reserve & Fidelity data · Free.
+
+## The 4-level narrative (how it flows down the page)
+1. **Financial Clarity** — Hero + Snapshot ("Where am I?"). Remove confusion first.
+2. **Better Decisions** — Difference + Decision Engine ("What's my next move?"). Direction over data.
+3. **Financial Independence** — Trajectory ("Where am I going?"). The date, made real and movable.
+4. **More Optionality** — new "The point" section + Final CTA. The emotional payoff: options, not a number.
+> Flow rule: open on clarity, build through decisions, project to independence, **land on optionality.**
+
+## Top 10 messaging improvements (by impact)
+1. ✅ Add an **optionality payoff** section (work you choose, family, travel, risk, less stress, confidence) — *done*.
+2. ✅ Hero subhead → "money creates options, not limits" — *done*.
+3. ✅ Trajectory subhead → "freedom isn't a bigger number — it's options…" — *done*.
+4. ✅ Final CTA → "…toward a life with more options" — *done*.
+5. ◻ Add **real testimonials / usage proof** (single biggest trust lift) — needs real users.
+6. ◻ Quantify the Decision Engine more ("freedom 14 mo sooner") across examples — partly there.
+7. ◻ Problem section: add a one-liner naming the stakes (time/options), not just uncertainty.
+8. ◻ "Why tools fail": end on a sharper one-liner — "They track your money. Freedomly directs it."
+9. ◻ Add a subtle outcome stat or "what users discover" beat above the fold.
+10. ◻ Tighten "How it works" step 2 copy; lead each step with the verb.
+
+## Brutal founder feedback (category-defining lens)
+- **Double down on:** *optionality* as the brand's soul, and the **Decision Engine** as the product's soul. Own the sentence **"Every other app tracks your money. Freedomly directs it."**
+- **Remove / resist:** any drift toward budgeting/expense-tracking, tool sprawl, and default bank-linking (keep "no bank linking" as a trust wedge).
+- **Emphasize more:** the *movable* freedom date (the aha), progress-over-time, and the emotional life outcomes.
+- **Instant "why it's different":** the hero product-preview showing **"Financially free at 52" → drag → 49.** Seeing freedom move is the 5-second hook no tracker can copy.

@@ -7,6 +7,27 @@ See `PROCESS.md` for how changes get made and shipped.
 
 ---
 
+## 2026-05-31
+
+- **Homepage redesign:** Rebuilt around the new positioning. Hero now leads
+  "Clarity on your money. Freedom in your life." with the purpose triad (build
+  confidence, reduce financial stress, create more optionality). Dropped the
+  "financial direction system" framing → centered on financial clarity +
+  independence.
+- **Interactive simulator:** New `components/HomeSimulator.tsx` — a no-signup
+  "freedom estimate" in the hero (3 sliders → live years-to-freedom + gradient
+  trajectory + CTA). Fires `home_simulator_used`.
+- **Engaging visuals:** Upgraded the Snapshot (donut gauge + net-worth hero +
+  gradient bars) and Trajectory (gradient area chart with markers) mocks.
+- **Tightened page:** Ends after "Five minutes to clarity" (removed the separate
+  trust, optionality, and final-CTA sections; optionality message lives in the
+  hero). Added a "beta" badge to the homepage logo.
+- **Docs:** Aligned deck / PRD / sales-guide positioning to the new hook
+  ("a financial system that gives you clarity on your money — so you stress less,
+  know where to go, and unlock your freedom"). PRD mission now states the purpose
+  triad. Added `POSITIONING.md` (full positioning, hero options, homepage
+  blueprint, product strategy, competitive analysis, optionality review).
+
 ## 2026-05-29
 
 - **Positioning / homepage:** Repositioned Freedomly as a **financial direction

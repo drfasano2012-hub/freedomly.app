@@ -45,10 +45,10 @@ pres.title   = "Freedomly — Your Financial Direction System";
   s.addText("Freedomly", {
     x: 0.7, y: 2.1, w: 8.6, h: 1.3, fontSize: 72, fontFace: "Calibri",
     bold: true, color: WHITE, align: "left", margin: 0 });
-  s.addText("A financial direction system", {
-    x: 0.7, y: 3.5, w: 8, h: 0.6, fontSize: 22, fontFace: "Calibri",
+  s.addText("Clarity on your money. Freedom in your life.", {
+    x: 0.7, y: 3.5, w: 8.6, h: 0.6, fontSize: 22, fontFace: "Calibri",
     color: "a5b4fc", align: "left", margin: 0 });
-  s.addText("Know where you stand, where you're headed, and what to do next.", {
+  s.addText("Stress less, know exactly where you're headed, and unlock your freedom.", {
     x: 0.7, y: 4.2, w: 8.6, h: 0.5, fontSize: 13, fontFace: "Calibri",
     color: SLATE, align: "left", italic: true, margin: 0 });
   s.addText("freedomly.app", {
@@ -193,7 +193,7 @@ pres.title   = "Freedomly — Your Financial Direction System";
   s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 4.7, w: 8.8, h: 0.65,
     fill: { color: "052e16" }, line: { color: EMERALD, width: 1 } });
   s.addText(
-    "Financial freedom shouldn't require a financial advisor. Freedomly makes the math, the benchmarks, and the plan accessible to everyone.",
+    "Our purpose: help people build confidence, reduce financial stress, and create more optionality in their lives.",
     { x: 0.8, y: 4.73, w: 8.4, h: 0.55, fontSize: 11, fontFace: "Calibri",
       italic: true, color: EMERALD, align: "center", margin: 0 });
 }
