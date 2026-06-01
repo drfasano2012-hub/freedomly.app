@@ -60,7 +60,7 @@ export default function LandingPage() {
             beta
           </span>
         </div>
-        <Link href="/checkup">
+        <Link href="/checkup" className="hidden sm:block">
           <Button size="sm">See where you stand &rarr;</Button>
         </Link>
       </header>
