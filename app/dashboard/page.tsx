@@ -11,7 +11,6 @@ import { FreedomAgeCard } from "@/components/dashboard/FreedomAgeCard";
 import { SnapshotCards } from "@/components/dashboard/SnapshotCards";
 import { BenchmarksSection } from "@/components/dashboard/BenchmarksSection";
 import { DetailCards } from "@/components/dashboard/DetailCards";
-import { PortfolioAllocation } from "@/components/dashboard/PortfolioAllocation";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -84,6 +83,16 @@ export default function DashboardPage() {
           <SnapshotCards metrics={metrics} monthlyTakeHome={inputs.monthlyTakeHome} />
         </section>
 
+        {/* Action plan — top 3 recommendations, surfaced early */}
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Action plan</SectionLabel>
+          <ActionPlan
+            actionPlan={metrics.actionPlan}
+            goals={inputs.goals}
+            employmentType={inputs.employmentType ?? "w2"}
+          />
+        </section>
+
         {/* Benchmarks */}
         <section className="flex flex-col gap-2">
           <SectionLabel>Benchmarks</SectionLabel>
@@ -94,25 +103,6 @@ export default function DashboardPage() {
         <section className="flex flex-col gap-2">
           <SectionLabel>Your numbers in detail</SectionLabel>
           <DetailCards metrics={metrics} inputs={inputs} />
-        </section>
-
-        {/* Action plan */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Action plan</SectionLabel>
-          <ActionPlan
-            actionPlan={metrics.actionPlan}
-            goals={inputs.goals}
-          />
-        </section>
-
-        {/* Portfolio allocation */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Recommended portfolio</SectionLabel>
-          <PortfolioAllocation
-            riskTolerance={inputs.riskTolerance}
-            currentAge={inputs.currentAge}
-            goals={inputs.goals}
-          />
         </section>
 
       </main>

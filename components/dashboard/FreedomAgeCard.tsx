@@ -33,29 +33,28 @@ function getStatusBadge(result: FreedomAgeResult): {
   return { label: "Needs work", color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.3)" };
 }
 
-/** Inline freedom age calculation for "what if" spending scenarios */
+/** Inline freedom age projection for the "what if" simulator (explicit monthly investment). */
 function calcAdjustedFreedomAge(
   currentAge: number,
-  monthlyTakeHome: number,
+  monthlyInvestment: number,
   adjustedMonthlySpending: number,
   startingValue: number
 ): { status: "no_surplus" | "over_50_years" | "already_reached" | "normal"; freedomAge: number | null; yearsToFreedom: number | null; fiNumber: number } {
   const annualSpending = adjustedMonthlySpending * 12;
   const fiNumber = annualSpending * 25;
   const monthlyRate = 0.07 / 12;
-  const surplus = monthlyTakeHome - adjustedMonthlySpending;
 
   if (startingValue >= fiNumber) {
     return { status: "already_reached", freedomAge: currentAge, yearsToFreedom: 0, fiNumber };
   }
-  if (surplus <= 0) {
+  if (monthlyInvestment <= 0) {
     return { status: "no_surplus", freedomAge: null, yearsToFreedom: null, fiNumber };
   }
 
   let fv = startingValue;
   let months = 0;
   while (fv < fiNumber && months < 600) {
-    fv = fv * (1 + monthlyRate) + surplus;
+    fv = fv * (1 + monthlyRate) + monthlyInvestment;
     months++;
   }
   if (months >= 600) {
@@ -81,25 +80,42 @@ export function FreedomAgeCard({
 }: Props) {
   const badge = getStatusBadge(result);
 
-  // Spending adjustment state — expressed as monthly reduction ($)
-  const [spendingReduction, setSpendingReduction] = useState(0);
+  // Freedom simulator — two levers: target monthly spending + monthly investing.
+  const targetFloor = Math.max(0, Math.round((monthlySpending * 0.4) / 50) * 50);
+  const targetCeil = Math.max(monthlySpending + 500, Math.round((monthlySpending * 1.25) / 50) * 50);
+  const investDefault = Math.max(0, Math.round(monthlySurplus / 50) * 50);
+  const investFloor = 0;
+  const investCeil = Math.max(Math.round(monthlyTakeHome / 50) * 50, investDefault + 1000);
+
+  const [targetSpending, setTargetSpending] = useState(monthlySpending);
+  const [investing, setInvesting] = useState(investDefault);
   const sliderTracked = useRef(false);
 
-  function handleSpendingReduction(value: number) {
-    setSpendingReduction(value);
-    if (value > 0 && !sliderTracked.current) {
+  function trackOnce() {
+    if (!sliderTracked.current) {
       sliderTracked.current = true; // fire once per mount, not per tick
       track("freedom_age_slider_used");
     }
   }
+  function handleTarget(value: number) {
+    const c = Math.min(targetCeil, Math.max(targetFloor, Math.round(value / 50) * 50));
+    setTargetSpending(c);
+    if (c !== monthlySpending) trackOnce();
+  }
+  function handleInvest(value: number) {
+    const c = Math.min(investCeil, Math.max(investFloor, Math.round(value / 50) * 50));
+    setInvesting(c);
+    if (c !== investDefault) trackOnce();
+  }
 
-  const adjustedSpending = Math.max(0, monthlySpending - spendingReduction);
+  const adjustedSpending = Math.max(0, targetSpending);
   const adjusted = useMemo(
-    () => calcAdjustedFreedomAge(currentAge, monthlyTakeHome, adjustedSpending, totalInvestedPlusCash),
-    [currentAge, monthlyTakeHome, adjustedSpending, totalInvestedPlusCash]
+    () => calcAdjustedFreedomAge(currentAge, investing, adjustedSpending, totalInvestedPlusCash),
+    [currentAge, investing, adjustedSpending, totalInvestedPlusCash]
   );
 
-  const isAdjusted = spendingReduction > 0;
+  const isAdjusted = targetSpending !== monthlySpending || investing !== investDefault;
+  const overCashflow = targetSpending + investing > monthlyTakeHome;
 
   const renderMain = () => {
     if (result.status === "already_reached") {
@@ -160,16 +176,15 @@ export function FreedomAgeCard({
   };
 
   const renderAdjustedResult = () => {
-    if (!isAdjusted) return null;
     if (adjusted.status === "already_reached") {
       return (
         <p className="text-sm font-semibold text-emerald-600">
-          You&rsquo;ve already reached your FI number — freedom now!
+          You&rsquo;d already be at your FI number — freedom now!
         </p>
       );
     }
     if (adjusted.status === "no_surplus") {
-      return <p className="text-sm text-red-500">Still no surplus at this spending level.</p>;
+      return <p className="text-sm text-red-500">Set a monthly investment above $0 to start the clock.</p>;
     }
     if (adjusted.status === "over_50_years") {
       return <p className="text-sm text-slate-500">Still 50+ years out at this level.</p>;
@@ -179,23 +194,24 @@ export function FreedomAgeCard({
         ? result.freedomAge - adjusted.freedomAge
         : null;
     return (
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2.5 flex-wrap">
         <div>
           <span className="text-2xl font-bold text-blue-600">{adjusted.freedomAge}</span>
           <span className="text-sm text-slate-500 ml-1.5">years old</span>
         </div>
         {delta !== null && delta > 0 && (
           <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-            {delta} year{delta !== 1 ? "s" : ""} earlier
+            {delta} year{delta !== 1 ? "s" : ""} earlier 🎉
+          </span>
+        )}
+        {delta !== null && delta < 0 && (
+          <span className="text-sm font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+            {Math.abs(delta)} year{Math.abs(delta) !== 1 ? "s" : ""} later
           </span>
         )}
         {delta !== null && delta === 0 && (
-          <span className="text-xs text-slate-500">Same timeline</span>
+          <span className="text-xs text-slate-500">Your current plan</span>
         )}
-        <span className="text-xs text-slate-500">
-          FI number: {formatCurrencyFull(adjusted.fiNumber)} · Surplus:{" "}
-          {formatCurrencyFull(monthlyTakeHome - adjustedSpending)}/mo
-        </span>
       </div>
     );
   };
@@ -234,51 +250,46 @@ export function FreedomAgeCard({
         </div>
       )}
 
-      {/* Spending adjustment calculator */}
+      {/* Freedom simulator — spending + investing levers */}
       {result.status !== "already_reached" && (
-        <div className="bg-blue-50/60 border border-blue-200/60 rounded-xl px-4 py-4 flex flex-col gap-3">
+        <div className="bg-blue-50/60 border border-blue-200/60 rounded-xl px-4 py-4 flex flex-col gap-4">
           <div>
-            <p className="text-xs font-semibold text-slate-700 mb-0.5">
-              What if I reduced my monthly spending?
-            </p>
+            <p className="text-xs font-semibold text-slate-700 mb-0.5">Freedom simulator</p>
             <p className="text-xs text-slate-500">
-              Drag to see how lower expenses shift your freedom date.
+              Adjust what you spend and invest — watch your freedom age move.
             </p>
           </div>
 
-          {/* Slider */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-600">Monthly spending reduction</span>
-              <span className="text-xs font-semibold text-blue-600">
-                {spendingReduction === 0 ? "None" : `−${formatCurrencyFull(spendingReduction)}/mo`}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={Math.max(100, Math.floor((monthlySpending - 100) / 100) * 100)}
-              step={100}
-              value={spendingReduction}
-              onChange={(e) => handleSpendingReduction(Number(e.target.value))}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-blue-500"
-              style={{ background: `linear-gradient(to right, #3b82f6 ${(spendingReduction / Math.max(100, Math.floor((monthlySpending - 100) / 100) * 100)) * 100}%, #e2e8f0 0%)` }}
-            />
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>$0</span>
-              <span>
-                Adjusted spending: <span className="font-medium text-slate-600">{formatCurrencyFull(adjustedSpending)}/mo</span>
-              </span>
-            </div>
-          </div>
+          <SimControl
+            label="Monthly spending"
+            value={targetSpending}
+            floor={targetFloor}
+            ceil={targetCeil}
+            nowLabel={`now: ${formatCurrencyFull(monthlySpending)}`}
+            onChange={handleTarget}
+          />
 
-          {/* Adjusted result */}
-          <div className="min-h-[2rem]">
-            {isAdjusted ? (
-              renderAdjustedResult()
-            ) : (
-              <p className="text-xs text-slate-400 italic">Slide to explore scenarios</p>
-            )}
+          <SimControl
+            label="Monthly investing"
+            value={investing}
+            floor={investFloor}
+            ceil={investCeil}
+            nowLabel={`now: ${formatCurrencyFull(investDefault)}`}
+            onChange={handleInvest}
+          />
+
+          {overCashflow && (
+            <p className="text-[11px] text-amber-600 -mt-1">
+              Heads up — spending + investing is more than your {formatCurrencyFull(monthlyTakeHome)}/mo take-home.
+            </p>
+          )}
+
+          {/* Live result */}
+          <div className="border-t border-blue-200/60 pt-3">
+            <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+              {isAdjusted ? "At this plan you'd be free at" : "Free at"}
+            </p>
+            {renderAdjustedResult()}
           </div>
         </div>
       )}
@@ -304,6 +315,67 @@ export function FreedomAgeCard({
       <p className="text-xs text-slate-400 leading-relaxed">
         Assumes 7% real annual return, 4% safe withdrawal rate. FI number = 25× annual spending.
       </p>
+    </div>
+  );
+}
+
+function SimControl({
+  label,
+  value,
+  floor,
+  ceil,
+  nowLabel,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  floor: number;
+  ceil: number;
+  nowLabel: string;
+  onChange: (v: number) => void;
+}) {
+  const pct = ceil > floor ? ((value - floor) / (ceil - floor)) * 100 : 0;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-600 shrink-0">{label}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={`Lower ${label}`}
+            onClick={() => onChange(value - 100)}
+            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-600 font-bold hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+          >
+            −
+          </button>
+          <span className="text-base font-bold text-slate-900 tabular-nums min-w-[5.5rem] text-center">
+            {formatCurrencyFull(value)}/mo
+          </span>
+          <button
+            type="button"
+            aria-label={`Raise ${label}`}
+            onClick={() => onChange(value + 100)}
+            className="w-7 h-7 rounded-lg bg-white border border-slate-300 text-slate-600 font-bold hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={floor}
+        max={ceil}
+        step={50}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-2 rounded-full appearance-none cursor-pointer accent-blue-500"
+        style={{ background: `linear-gradient(to right, #3b82f6 ${pct}%, #e2e8f0 0%)` }}
+      />
+      <div className="flex justify-between text-[11px] text-slate-400">
+        <span>{formatCurrencyFull(floor)}</span>
+        <span>{nowLabel}</span>
+        <span>{formatCurrencyFull(ceil)}</span>
+      </div>
     </div>
   );
 }

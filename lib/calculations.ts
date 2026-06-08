@@ -276,6 +276,26 @@ export function generateActionPlan(
 
   const { savingsRate, emergencyFundMonths, highInterestDebt, totalInvestments, monthlySurplus } = metrics;
 
+  // Employment-aware retirement framing (W2 vs self-employed/business owner vs not working)
+  const emp = inputs.employmentType ?? "w2";
+  const selfEmployed = emp === "self_employed" || emp === "business_owner";
+
+  const taxAdvText = selfEmployed
+    ? "Open a Solo 401(k) or SEP-IRA"
+    : emp === "not_employed"
+      ? "Open a (spousal) Roth IRA"
+      : "Maximize tax-advantaged accounts";
+  const taxAdvDetail = selfEmployed
+    ? "As self-employed, you can shelter far more than a regular IRA — a Solo 401(k) or SEP-IRA lets you contribute as both employee and employer."
+    : emp === "not_employed"
+      ? "With no earned income a 401(k) isn't available — but a spousal Roth IRA (if your spouse has earned income) keeps your tax-free investing going."
+      : "Contribute enough to your 401(k) to capture your full employer match, then max your Roth IRA ($7,000/year).";
+
+  const rothText = selfEmployed ? "Open a Solo 401(k) or SEP-IRA" : "Open a Roth IRA";
+  const rothDetail = selfEmployed
+    ? "You have a surplus but no investments yet. As self-employed, a Solo 401(k) or SEP-IRA shelters far more than a regular IRA — open one to start investing tax-advantaged."
+    : "You have a positive surplus but no investments yet. A Roth IRA grows tax-free — start with even $50/month.";
+
   // What's going well
   if (savingsRate >= 0.2) goingWell.push("Excellent savings rate — you're building wealth fast");
   else if (savingsRate >= 0.1) goingWell.push("Solid savings rate above 10%");
@@ -311,13 +331,13 @@ export function generateActionPlan(
     },
     {
       id: "roth_ira",
-      text: "Open a Roth IRA",
-      detail: "You have a positive surplus but no investments yet. A Roth IRA grows tax-free — start with even $50/month.",
+      text: rothText,
+      detail: rothDetail,
     },
     {
       id: "max_tax_advantaged",
-      text: "Maximize tax-advantaged accounts",
-      detail: "Contribute enough to your 401(k) to capture any employer match, then max your Roth IRA ($7,000/year for 2024).",
+      text: taxAdvText,
+      detail: taxAdvDetail,
     },
     {
       id: "audit_expenses",
@@ -532,6 +552,7 @@ export function getSampleData(): UserInputs {
       { id: "g3", label: "Retire comfortably", horizon: "long" },
     ],
     riskTolerance: "moderate",
+    employmentType: "w2",
   };
 }
 

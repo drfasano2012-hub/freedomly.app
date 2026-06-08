@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TrendingUp, MapPin, Compass, Target, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { MobileStickyCTA } from "@/components/MobileStickyCTA";
 import { HomeSimulator } from "@/components/HomeSimulator";
 
 /* ───────────────────────── small building blocks ───────────────────────── */
@@ -50,7 +51,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-transparent flex flex-col">
       {/* Header */}
-      <header className="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto w-full">
+      <header className="px-6 py-5 flex items-center max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
             <TrendingUp size={15} className="text-white" strokeWidth={2.5} />
@@ -60,13 +61,10 @@ export default function LandingPage() {
             beta
           </span>
         </div>
-        <Link href="/checkup" className="hidden sm:block">
-          <Button size="sm">See where you stand &rarr;</Button>
-        </Link>
       </header>
 
       {/* ───────────── 1. HERO ───────────── */}
-      <main className="px-6 pt-12 pb-20">
+      <main className="px-6 pt-8 sm:pt-12 pb-14 sm:pb-20">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: copy */}
           <div className="text-center lg:text-left flex flex-col items-center lg:items-start">
@@ -76,9 +74,9 @@ export default function LandingPage() {
               <span className="text-emerald-400">Freedom in your life.</span>
             </h1>
             <p className="mt-6 text-base sm:text-lg text-white/60 max-w-xl leading-relaxed">
-              Freedomly is a financial system that shows you where you stand, where
-              you&rsquo;re headed, and what to do next — so you build confidence, reduce
-              financial stress, and create more optionality in your life. Free, in 5 minutes.
+              Freedomly turns your finances into a clear path to financial independence —
+              and the freedom to choose how you work, live, and spend your time. See where
+              you stand in 5 minutes, free.
             </p>
             <div className="mt-9 flex flex-col sm:flex-row items-center gap-3">
               <Link href="/checkup">
@@ -111,7 +109,7 @@ export default function LandingPage() {
       </main>
 
       {/* ───────────── 2. PROBLEM ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <SectionHeading
           kicker="The problem"
           title={<>You&rsquo;re doing fine. But are you doing <span className="text-emerald-400">well?</span></>}
@@ -137,7 +135,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 3. WHY CURRENT TOOLS FAIL ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10 bg-white/[0.03]">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
         <SectionHeading
           kicker="Why current tools fail"
           title="More financial data won't fix this"
@@ -183,7 +181,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 4. THE FREEDOMLY DIFFERENCE ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <SectionHeading
           kicker="The Freedomly difference"
           title="Three questions. One clear answer."
@@ -228,7 +226,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 5. SNAPSHOT EXAMPLE ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10 bg-white/[0.03]">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <SectionHeading
             center={false}
@@ -307,7 +305,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 6. TRAJECTORY & FI ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* visual first on lg */}
           <div className="order-2 lg:order-1 bg-white/80 backdrop-blur-sm border border-white/60 shadow-2xl rounded-3xl p-6">
@@ -369,7 +367,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 7. DECISION ENGINE ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10 bg-white/[0.03]">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <SectionHeading
             center={false}
@@ -398,7 +396,7 @@ export default function LandingPage() {
       </section>
 
       {/* ───────────── 8. HOW IT WORKS ───────────── */}
-      <section className="px-6 py-20 border-t border-white/10">
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <SectionHeading kicker="How it works" title="Five minutes to clarity" />
         <div className="mt-12 max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
           {[
@@ -425,12 +423,15 @@ export default function LandingPage() {
       </section>
 
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 px-6 py-6 text-center">
+      {/* Footer (extra bottom padding on mobile so the sticky CTA never covers it) */}
+      <footer className="border-t border-white/10 px-6 pt-6 pb-28 sm:pb-6 text-center">
         <p className="text-xs text-white/40">
           Freedomly is a financial clarity tool, not financial advice. &copy; 2026 Freedomly
         </p>
       </footer>
+
+      {/* Mobile-only sticky CTA */}
+      <MobileStickyCTA />
     </div>
   );
 }

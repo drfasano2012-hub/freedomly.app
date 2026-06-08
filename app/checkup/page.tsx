@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft, TrendingUp } from "lucide-react";
+import { TrendingUp, ArrowRight, Check } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { getSampleData } from "@/lib/calculations";
 import { track } from "@/lib/analytics";
-import { ProgressBar } from "@/components/ProgressBar";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import type { RiskTolerance, GoalHorizon, UserInputs, Debt, Goal } from "@/lib/types";
+import type {
+  RiskTolerance,
+  EmploymentType,
+  GoalHorizon,
+  UserInputs,
+  Debt,
+  Goal,
+} from "@/lib/types";
 
-// ─── Goals data ───────────────────────────────────────────────────────────────
+// ─── Config (reused from the original wizard) ──────────────────────────────────
 
 const GOALS: { id: string; label: string; horizon: GoalHorizon }[] = [
   { id: "emergency_fund", label: "Build emergency fund", horizon: "short" },
@@ -24,20 +28,18 @@ const GOALS: { id: string; label: string; horizon: GoalHorizon }[] = [
   { id: "fi", label: "Achieve financial independence", horizon: "long" },
 ];
 
-const HORIZON_LABELS: Record<GoalHorizon, string> = {
-  short: "Short-term  (under 2 years)",
-  mid: "Mid-term  (2–7 years)",
-  long: "Long-term  (7+ years)",
-};
+const EMPLOYMENT_OPTIONS: { value: EmploymentType; label: string; icon: string }[] = [
+  { value: "w2", label: "Employee (W-2)", icon: "💼" },
+  { value: "self_employed", label: "Self-employed", icon: "🧑‍💻" },
+  { value: "business_owner", label: "Business owner", icon: "🏢" },
+  { value: "not_employed", label: "Not working now", icon: "🌿" },
+];
 
-// ─── Form state ───────────────────────────────────────────────────────────────
-
-interface DebtForm {
-  id: string;
-  name: string;
-  balance: string;
-  rate: string; // as percentage string, e.g. "22" for 22%
-}
+const RISK_OPTIONS: { value: RiskTolerance; label: string; icon: string }[] = [
+  { value: "conservative", label: "Conservative", icon: "🛡️" },
+  { value: "moderate", label: "Moderate", icon: "⚖️" },
+  { value: "aggressive", label: "Aggressive", icon: "🚀" },
+];
 
 interface FormData {
   currentAge: string;
@@ -48,36 +50,20 @@ interface FormData {
   retirementAccounts: string;
   brokerageAccounts: string;
   hsaAccounts: string;
-  debts: DebtForm[];
+  debts: { id: string; name: string; balance: string; rate: string }[];
   selectedGoalIds: string[];
   riskTolerance: RiskTolerance | "";
+  employmentType: EmploymentType | "";
 }
 
 const EMPTY_FORM: FormData = {
-  currentAge: "",
-  annualIncome: "",
-  monthlyTakeHome: "",
-  monthlySpending: "",
-  cashSavings: "",
-  retirementAccounts: "",
-  brokerageAccounts: "",
-  hsaAccounts: "",
-  debts: [],
-  selectedGoalIds: [],
-  riskTolerance: "",
+  currentAge: "", annualIncome: "", monthlyTakeHome: "", monthlySpending: "",
+  cashSavings: "", retirementAccounts: "", brokerageAccounts: "", hsaAccounts: "",
+  debts: [], selectedGoalIds: [], riskTolerance: "", employmentType: "",
 };
 
-const STEP_LABELS = ["You & Income", "Spending & Savings", "Debt", "Goals", "Risk"];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function parseNum(s: string): number {
-  return parseFloat(s.replace(/,/g, "")) || 0;
-}
-
-function newDebt(): DebtForm {
-  return { id: crypto.randomUUID(), name: "", balance: "", rate: "" };
-}
+const parseNum = (s: string) => parseFloat(s.replace(/,/g, "")) || 0;
+const fmtUSD = (n: number) => "$" + Math.round(n).toLocaleString();
 
 function sampleToForm(s: UserInputs): FormData {
   return {
@@ -89,60 +75,257 @@ function sampleToForm(s: UserInputs): FormData {
     retirementAccounts: String(s.retirementAccounts),
     brokerageAccounts: String(s.brokerageAccounts),
     hsaAccounts: String(s.hsaAccounts),
-    debts: s.debts.map((d) => ({
-      id: d.id,
-      name: d.name,
-      balance: String(d.balance),
-      rate: String(Math.round(d.rate * 100)),
-    })),
+    debts: s.debts.map((d) => ({ id: d.id, name: d.name, balance: String(d.balance), rate: String(Math.round(d.rate * 100)) })),
     selectedGoalIds: s.goals.map((g) => g.id),
     riskTolerance: s.riskTolerance,
+    employmentType: s.employmentType ?? "w2",
   };
 }
 
-// ─── Page component ───────────────────────────────────────────────────────────
+// ─── Conversation script ───────────────────────────────────────────────────────
+
+type StepId =
+  | "intro" | "age" | "employment" | "takeHome" | "annualIncome" | "spending"
+  | "cash" | "retirement" | "brokerage" | "hsa" | "debtsAsk"
+  | "debtName" | "debtBalance" | "debtRate" | "debtMore"
+  | "goals" | "risk" | "done";
+
+const PROMPT: Record<StepId, string> = {
+  intro: "Hey 👋 I'm Freedomly. I'll ask a few quick questions, then map your path to financial independence. Takes about 2 minutes — and your answers never leave your browser.",
+  age: "First up — how old are you?",
+  employment: "Got it. What best describes your work?",
+  takeHome: "Roughly how much do you take home each month, after taxes?",
+  annualIncome: "And your annual gross income, before taxes? This sharpens your benchmarks — feel free to skip.",
+  spending: "About how much do you spend in a typical month?",
+  cash: "How much do you keep in cash — checking + savings combined?",
+  retirement: "Nice. What's in your retirement accounts — 401(k), IRA, Roth, all together?",
+  brokerage: "Any taxable investments? (Fidelity, Schwab, Robinhood, and the like.)",
+  hsa: "And an HSA balance, if you have one?",
+  debtsAsk: "Do you have any debts — credit cards, loans, anything like that?",
+  debtName: "What's the debt? (e.g. Credit card, Student loan)",
+  debtBalance: "How much is left on it?",
+  debtRate: "What's the interest rate (APR)?",
+  debtMore: "Got it. Any other debts?",
+  goals: "What are you working toward? Tap all that fit.",
+  risk: "Last one — how do you feel about investment risk?",
+  done: "Perfect — building your dashboard… ✨",
+};
+
+// linear "send/choice" transitions (debts + goals handled specially)
+const NEXT: Partial<Record<StepId, StepId>> = {
+  age: "employment", employment: "takeHome", takeHome: "annualIncome",
+  annualIncome: "spending", spending: "cash", cash: "retirement",
+  retirement: "brokerage", brokerage: "hsa", hsa: "debtsAsk",
+  goals: "risk", risk: "done",
+};
+
+type AmountField =
+  | "currentAge" | "monthlyTakeHome" | "annualIncome" | "monthlySpending"
+  | "cashSavings" | "retirementAccounts" | "brokerageAccounts" | "hsaAccounts";
+
+const FIELD_OF: Partial<Record<StepId, AmountField>> = {
+  age: "currentAge", takeHome: "monthlyTakeHome", annualIncome: "annualIncome",
+  spending: "monthlySpending", cash: "cashSavings", retirement: "retirementAccounts",
+  brokerage: "brokerageAccounts", hsa: "hsaAccounts",
+};
+
+const REQUIRED = new Set<StepId>(["age", "takeHome", "spending"]);
+const SKIPPABLE = new Set<StepId>(["annualIncome", "cash", "retirement", "brokerage", "hsa"]);
+const PROGRESS_ORDER: StepId[] = [
+  "age", "employment", "takeHome", "annualIncome", "spending", "cash",
+  "retirement", "brokerage", "hsa", "debtsAsk", "goals", "risk",
+];
+
+type Msg = { id: number; role: "bot" | "user"; text: string };
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CheckupPage() {
   const router = useRouter();
   const { inputs, setInputs, hydrated } = useFinancialData();
-  const [step, setStep] = useState(1);
+
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [current, setCurrent] = useState<StepId>("intro");
+  const [typing, setTyping] = useState(false);
+  const [inputVal, setInputVal] = useState("");
+  const [error, setError] = useState("");
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const formRef = useRef(form);
+  formRef.current = form;
+  const draftRef = useRef({ name: "", balance: "", rate: "" });
+  const msgId = useRef(0);
+  const started = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isEditing = hydrated && inputs !== null;
 
-  // Pre-fill form from existing data when editing
-  useEffect(() => {
-    if (hydrated && inputs) {
-      setForm(sampleToForm(inputs));
-    }
-  }, [hydrated]); // intentionally run once on hydration
+  const nextMsgId = () => ++msgId.current;
+  const pushUser = (text: string) =>
+    setMessages((m) => [...m, { id: nextMsgId(), role: "user", text }]);
 
-  // Track checkup entry once on hydration (new vs. editing)
+  // Ask a question: typing indicator, then bot bubble, then enable its composer.
+  const ask = useCallback((id: StepId) => {
+    setTyping(true);
+    setError("");
+    window.setTimeout(() => {
+      setMessages((m) => [...m, { id: nextMsgId(), role: "bot", text: PROMPT[id] }]);
+      setTyping(false);
+      setCurrent(id);
+      const field = FIELD_OF[id];
+      setInputVal(field ? formRef.current[field] || "" : "");
+    }, 450);
+  }, []);
+
+  // Intro sequence — explain what Freedomly is, then offer to start.
+  const startIntro = useCallback(() => {
+    const lines = [
+      "Hey 👋 I'm Freedomly — I turn your finances into clear direction, so you can stress less and build a real path to financial independence.",
+      "In about 2 minutes I'll show you three things: where you stand today, where you're headed, and the single best move to get there faster.",
+      "Your answers never leave your browser. Ready to find your number?",
+    ];
+    const step = (i: number) => {
+      setTyping(true);
+      window.setTimeout(() => {
+        setMessages((m) => [...m, { id: nextMsgId(), role: "bot", text: lines[i] }]);
+        if (i + 1 < lines.length) {
+          step(i + 1);
+        } else {
+          setTyping(false);
+          setCurrent("intro");
+          setInputVal("");
+        }
+      }, i === 0 ? 350 : 750);
+    };
+    step(0);
+  }, []);
+
+  // Start the conversation once hydrated.
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || started.current) return;
+    started.current = true;
+    if (inputs) setForm(sampleToForm(inputs));
     track(inputs ? "checkup_edited" : "checkup_started");
-  }, [hydrated]); // intentionally run once on hydration
+    startIntro();
+  }, [hydrated, inputs, startIntro]);
 
-  // ── Field helpers
+  // Auto-scroll to newest message.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, typing]);
 
-  function set(field: keyof FormData, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: "" }));
+  // ── Finish → build UserInputs (same mapping as the original wizard) → dashboard
+  const finish = useCallback(() => {
+    const f = formRef.current;
+    const built: UserInputs = {
+      currentAge: parseNum(f.currentAge),
+      annualIncome: parseNum(f.annualIncome),
+      monthlyTakeHome: parseNum(f.monthlyTakeHome),
+      monthlySpending: parseNum(f.monthlySpending),
+      cashSavings: parseNum(f.cashSavings),
+      retirementAccounts: parseNum(f.retirementAccounts),
+      brokerageAccounts: parseNum(f.brokerageAccounts),
+      hsaAccounts: parseNum(f.hsaAccounts),
+      debts: f.debts
+        .filter((d) => d.name && parseNum(d.balance) > 0)
+        .map((d): Debt => ({ id: d.id, name: d.name, balance: parseNum(d.balance), rate: parseNum(d.rate) / 100 })),
+      goals: GOALS.filter((g) => f.selectedGoalIds.includes(g.id)).map(
+        (g): Goal => ({ id: g.id, label: g.label, horizon: g.horizon })
+      ),
+      riskTolerance: (f.riskTolerance || "moderate") as RiskTolerance,
+      employmentType: (f.employmentType || "w2") as EmploymentType,
+    };
+    setInputs(built);
+    track("checkup_completed", {
+      debt_count: built.debts.length,
+      goal_count: built.goals.length,
+      risk: built.riskTolerance,
+    });
+    window.setTimeout(() => router.push("/dashboard"), 800);
+  }, [router, setInputs]);
+
+  useEffect(() => {
+    if (current === "done") finish();
+  }, [current, finish]);
+
+  // ── Answer handlers
+  const advance = (from: StepId) => {
+    track("checkup_step_completed", { step: from });
+    ask(NEXT[from]!);
+  };
+
+  function sendValue() {
+    const field = FIELD_OF[current];
+    if (!field) return;
+    const n = parseNum(inputVal);
+    if (REQUIRED.has(current) && (!inputVal.trim() || n <= 0)) {
+      setError(current === "age" ? "Please enter your age." : "Please enter an amount.");
+      return;
+    }
+    setForm((f) => ({ ...f, [field]: inputVal }));
+    pushUser(current === "age" ? inputVal : fmtUSD(n));
+    advance(current);
   }
 
-  function setDebt(id: string, field: keyof DebtForm, value: string) {
-    setForm((f) => ({
-      ...f,
-      debts: f.debts.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
-    }));
+  function skip() {
+    const field = FIELD_OF[current];
+    if (field) setForm((f) => ({ ...f, [field]: "" }));
+    pushUser("Skip");
+    advance(current);
   }
 
-  function addDebt() {
-    setForm((f) => ({ ...f, debts: [...f.debts, newDebt()] }));
+  function chooseEmployment(o: (typeof EMPLOYMENT_OPTIONS)[number]) {
+    setForm((f) => ({ ...f, employmentType: o.value }));
+    pushUser(`${o.icon} ${o.label}`);
+    advance("employment");
   }
 
-  function removeDebt(id: string) {
-    setForm((f) => ({ ...f, debts: f.debts.filter((d) => d.id !== id) }));
+  function chooseRisk(o: (typeof RISK_OPTIONS)[number]) {
+    setForm((f) => ({ ...f, riskTolerance: o.value }));
+    pushUser(`${o.icon} ${o.label}`);
+    advance("risk");
+  }
+
+  function answerDebtsAsk(hasDebt: boolean) {
+    if (hasDebt) {
+      draftRef.current = { name: "", balance: "", rate: "" };
+      pushUser("Yes");
+      track("checkup_step_completed", { step: "debtsAsk" });
+      ask("debtName");
+    } else {
+      pushUser("No debts");
+      track("checkup_step_completed", { step: "debtsAsk" });
+      ask("goals");
+    }
+  }
+
+  function sendDebtField() {
+    if (current === "debtName") {
+      if (!inputVal.trim()) { setError("Give it a quick name."); return; }
+      draftRef.current.name = inputVal.trim();
+      pushUser(inputVal.trim());
+      ask("debtBalance");
+    } else if (current === "debtBalance") {
+      draftRef.current.balance = inputVal;
+      pushUser(fmtUSD(parseNum(inputVal)));
+      ask("debtRate");
+    } else if (current === "debtRate") {
+      draftRef.current.rate = inputVal;
+      const d = draftRef.current;
+      setForm((f) => ({ ...f, debts: [...f.debts, { id: crypto.randomUUID(), name: d.name, balance: d.balance, rate: d.rate }] }));
+      pushUser(`${parseNum(inputVal)}% APR`);
+      ask("debtMore");
+    }
+  }
+
+  function answerDebtMore(another: boolean) {
+    if (another) {
+      draftRef.current = { name: "", balance: "", rate: "" };
+      pushUser("Add another");
+      ask("debtName");
+    } else {
+      pushUser("That's all");
+      ask("goals");
+    }
   }
 
   function toggleGoal(id: string) {
@@ -154,560 +337,232 @@ export default function CheckupPage() {
     }));
   }
 
-  function loadSampleData() {
-    setForm(sampleToForm(getSampleData()));
-    setErrors({});
+  function submitGoals() {
+    const labels = GOALS.filter((g) => form.selectedGoalIds.includes(g.id)).map((g) => g.label);
+    pushUser(labels.length ? labels.join(", ") : "Just exploring for now");
+    advance("goals");
+  }
+
+  function useSample() {
+    pushUser("Use sample data");
     track("sample_data_used");
+    setTyping(true);
+    window.setTimeout(() => {
+      setMessages((m) => [...m, { id: nextMsgId(), role: "bot", text: "Loading a sample profile… ✨" }]);
+      setTyping(false);
+      setInputs(getSampleData());
+      window.setTimeout(() => router.push("/dashboard"), 700);
+    }, 450);
   }
 
-  // ── Validation
+  // ── Progress
+  const pi = PROGRESS_ORDER.indexOf(current);
+  const progress = current === "done" ? 100 : current === "intro" ? 4 : Math.round(((pi + 1) / PROGRESS_ORDER.length) * 100);
 
-  function validateStep(s: number): boolean {
-    const errs: Record<string, string> = {};
-
-    if (s === 1) {
-      if (!form.currentAge || parseNum(form.currentAge) <= 0)
-        errs.currentAge = "Please enter your age";
-      if (!form.monthlyTakeHome || parseNum(form.monthlyTakeHome) <= 0)
-        errs.monthlyTakeHome = "Monthly take-home is required";
-    }
-
-    if (s === 2) {
-      if (!form.monthlySpending || parseNum(form.monthlySpending) <= 0)
-        errs.monthlySpending = "Monthly spending is required";
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  // ── Navigation
-
-  function next() {
-    if (!validateStep(step)) return;
-    track("checkup_step_completed", { step });
-    if (step < 5) setStep((s) => s + 1);
-    else submit();
-  }
-
-  function back() {
-    if (step > 1) setStep((s) => s - 1);
-    else router.push("/");
-  }
-
-  // ── Submit
-
-  function submit() {
-    const inputs: UserInputs = {
-      currentAge: parseNum(form.currentAge),
-      annualIncome: parseNum(form.annualIncome),
-      monthlyTakeHome: parseNum(form.monthlyTakeHome),
-      monthlySpending: parseNum(form.monthlySpending),
-      cashSavings: parseNum(form.cashSavings),
-      retirementAccounts: parseNum(form.retirementAccounts),
-      brokerageAccounts: parseNum(form.brokerageAccounts),
-      hsaAccounts: parseNum(form.hsaAccounts),
-      debts: form.debts
-        .filter((d) => d.name && parseNum(d.balance) > 0)
-        .map((d): Debt => ({
-          id: d.id,
-          name: d.name,
-          balance: parseNum(d.balance),
-          rate: parseNum(d.rate) / 100,
-        })),
-      goals: GOALS.filter((g) =>
-        form.selectedGoalIds.includes(g.id)
-      ).map((g): Goal => ({ id: g.id, label: g.label, horizon: g.horizon })),
-      riskTolerance: (form.riskTolerance || "moderate") as RiskTolerance,
-    };
-
-    setInputs(inputs);
-    // Activation event. NOTE: no financial values — count + flags only.
-    track("checkup_completed", {
-      debt_count: inputs.debts.length,
-      goal_count: inputs.goals.length,
-      risk: inputs.riskTolerance,
-    });
-    router.push("/dashboard");
-  }
-
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ── Composer for the active step
+  const numericSteps: StepId[] = ["age", "debtRate"];
+  const currencySteps: StepId[] = ["takeHome", "annualIncome", "spending", "cash", "retirement", "brokerage", "hsa", "debtBalance"];
+  const isText = current === "debtName";
+  const isAmount = numericSteps.includes(current) || currencySteps.includes(current);
+  const showComposerInput = isAmount || isText;
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center px-4 py-8 sm:py-16">
-      {/* Card container */}
-      <div className="w-full max-w-lg">
-        {/* Logo */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="h-[100dvh] flex flex-col bg-transparent">
+      {/* Header */}
+      <header className="shrink-0 px-4 sm:px-6 pt-5 pb-3 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                <TrendingUp size={15} className="text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-base font-bold text-white">Freedomly</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+              <TrendingUp size={15} className="text-white" strokeWidth={2.5} />
             </div>
-            {isEditing && (
-              <span className="text-xs text-amber-600 border border-amber-400/50 bg-amber-100/80 rounded-full px-2 py-0.5">
-                Editing
-              </span>
-            )}
+            <span className="text-base font-bold text-white">Freedomly</span>
           </div>
-          {step === 1 && (
+          {isEditing && (
             <button
-              onClick={loadSampleData}
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+              onClick={() => router.push("/dashboard")}
+              className="text-xs text-emerald-300 hover:text-emerald-200 font-medium"
             >
-              Try sample data
+              Skip to dashboard →
             </button>
           )}
         </div>
-
-        {/* Progress */}
-        <div className="mb-8">
-          <ProgressBar current={step} total={5} labels={STEP_LABELS} />
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
+      </header>
 
-        {/* Form card */}
-        <div className="bg-white/70 backdrop-blur-sm border border-white/60 rounded-2xl p-6 sm:p-8 shadow-sm">
-          {step === 1 && <StepIncome form={form} errors={errors} set={set} />}
-          {step === 2 && <StepSpending form={form} errors={errors} set={set} />}
-          {step === 3 && (
-            <StepDebt
-              form={form}
-              addDebt={addDebt}
-              removeDebt={removeDebt}
-              setDebt={setDebt}
-            />
-          )}
-          {step === 4 && <StepGoals form={form} toggleGoal={toggleGoal} />}
-          {step === 5 && (
-            <StepRisk
-              value={form.riskTolerance}
-              onChange={(v) => set("riskTolerance", v)}
-            />
-          )}
-
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-3 mt-8">
-            <button
-              onClick={back}
-              className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-600 transition-colors"
-            >
-              <ArrowLeft size={14} />
-              Back
-            </button>
-            <div className="flex-1" />
-            <Button onClick={next} size="md" className="px-6">
-              {step === 5 ? "See my dashboard →" : "Continue"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Reassurance */}
-        <p className="text-center text-xs text-white/40 mt-5">
-          Your data stays in your browser — never sent to a server.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 1: Income ────────────────────────────────────────────────────────────
-
-function StepIncome({
-  form,
-  errors,
-  set,
-}: {
-  form: FormData;
-  errors: Record<string, string>;
-  set: (f: keyof FormData, v: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800 mb-1">
-          You &amp; your income
-        </h2>
-        <p className="text-sm text-slate-600">
-          The foundation for your financial picture.
-        </p>
-      </div>
-      <Input
-        label="Current age"
-        id="currentAge"
-        type="number"
-        min={18}
-        max={100}
-        placeholder="32"
-        value={form.currentAge}
-        onChange={(e) => set("currentAge", e.target.value)}
-        error={errors.currentAge}
-      />
-      <Input
-        label="Monthly take-home pay"
-        id="monthlyTakeHome"
-        type="number"
-        min={1}
-        placeholder="4,800"
-        prefix="$"
-        hint="After taxes and deductions"
-        value={form.monthlyTakeHome}
-        onChange={(e) => set("monthlyTakeHome", e.target.value)}
-        error={errors.monthlyTakeHome}
-      />
-      <Input
-        label="Annual gross income"
-        id="annualIncome"
-        type="number"
-        min={0}
-        placeholder="75,000"
-        prefix="$"
-        hint="Before taxes — used for wealth benchmarks"
-        optional
-        value={form.annualIncome}
-        onChange={(e) => set("annualIncome", e.target.value)}
-      />
-    </div>
-  );
-}
-
-// ─── Step 2: Spending & savings ────────────────────────────────────────────────
-
-function StepSpending({
-  form,
-  errors,
-  set,
-}: {
-  form: FormData;
-  errors: Record<string, string>;
-  set: (f: keyof FormData, v: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800 mb-1">
-          Spending, cash &amp; investments
-        </h2>
-        <p className="text-sm text-slate-600">
-          Best estimates are fine — this isn&rsquo;t a budget tracker.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-          Monthly spending
-        </p>
-        <Input
-          label="Total monthly spending"
-          id="monthlySpending"
-          type="number"
-          min={1}
-          placeholder="3,200"
-          prefix="$"
-          hint="Housing, food, transport, subscriptions — all of it"
-          value={form.monthlySpending}
-          onChange={(e) => set("monthlySpending", e.target.value)}
-          error={errors.monthlySpending}
-        />
-      </div>
-
-      <div className="space-y-4">
-        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-          Assets
-        </p>
-        <Input
-          label="Cash savings"
-          id="cashSavings"
-          type="number"
-          min={0}
-          placeholder="2,000"
-          prefix="$"
-          hint="Checking account + high-yield savings"
-          optional
-          value={form.cashSavings}
-          onChange={(e) => set("cashSavings", e.target.value)}
-        />
-        <Input
-          label="Retirement accounts"
-          id="retirementAccounts"
-          type="number"
-          min={0}
-          placeholder="18,000"
-          prefix="$"
-          hint="401(k), IRA, Roth IRA combined"
-          optional
-          value={form.retirementAccounts}
-          onChange={(e) => set("retirementAccounts", e.target.value)}
-        />
-        <Input
-          label="Brokerage accounts"
-          id="brokerageAccounts"
-          type="number"
-          min={0}
-          placeholder="0"
-          prefix="$"
-          hint="Taxable investment accounts — e.g. Fidelity, Schwab, Robinhood"
-          optional
-          value={form.brokerageAccounts}
-          onChange={(e) => set("brokerageAccounts", e.target.value)}
-        />
-        <Input
-          label="HSA balance"
-          id="hsaAccounts"
-          type="number"
-          min={0}
-          placeholder="0"
-          prefix="$"
-          hint="Health savings account"
-          optional
-          value={form.hsaAccounts}
-          onChange={(e) => set("hsaAccounts", e.target.value)}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 3: Debt ──────────────────────────────────────────────────────────────
-
-function StepDebt({
-  form,
-  addDebt,
-  removeDebt,
-  setDebt,
-}: {
-  form: FormData;
-  addDebt: () => void;
-  removeDebt: (id: string) => void;
-  setDebt: (id: string, field: keyof DebtForm, value: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800 mb-1">Debt</h2>
-        <p className="text-sm text-slate-600">
-          Add each debt separately so we can prioritize high-interest first.
-        </p>
-      </div>
-
-      {form.debts.length === 0 ? (
-        <div className="border border-dashed border-slate-200 rounded-xl p-6 text-center">
-          <p className="text-sm text-slate-600 mb-3">
-            No debts? Great — skip ahead.
-          </p>
-          <Button variant="secondary" size="sm" onClick={addDebt}>
-            <Plus size={14} />
-            Add a debt
-          </Button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {form.debts.map((debt, i) => (
-            <div
-              key={debt.id}
-              className="bg-white/50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Debt {i + 1}
-                </span>
-                <button
-                  onClick={() => removeDebt(debt.id)}
-                  className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded"
-                  aria-label="Remove debt"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-              <Input
-                label="Name"
-                id={`debt-name-${debt.id}`}
-                placeholder='e.g. "Credit card" or "Student loan"'
-                value={debt.name}
-                onChange={(e) => setDebt(debt.id, "name", e.target.value)}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Balance"
-                  id={`debt-balance-${debt.id}`}
-                  type="number"
-                  min={0}
-                  placeholder="22,000"
-                  prefix="$"
-                  value={debt.balance}
-                  onChange={(e) => setDebt(debt.id, "balance", e.target.value)}
-                />
-                <Input
-                  label="APR"
-                  id={`debt-rate-${debt.id}`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  placeholder="6.0"
-                  suffix="%"
-                  value={debt.rate}
-                  onChange={(e) => setDebt(debt.id, "rate", e.target.value)}
-                />
-              </div>
-              {parseFloat(debt.rate) > 10 && (
-                <p className="text-xs text-amber-600 flex items-center gap-1.5">
-                  <span>⚠</span> High-interest debt — this will be a top priority
-                </p>
-              )}
-            </div>
-          ))}
-
-          <Button variant="secondary" size="sm" onClick={addDebt} className="self-start">
-            <Plus size={14} />
-            Add another debt
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Step 4: Goals ─────────────────────────────────────────────────────────────
-
-function StepGoals({
-  form,
-  toggleGoal,
-}: {
-  form: FormData;
-  toggleGoal: (id: string) => void;
-}) {
-  const horizons: GoalHorizon[] = ["short", "mid", "long"];
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800 mb-1">
-          What are you working toward?
-        </h2>
-        <p className="text-sm text-slate-600">
-          Select all that apply — your action plan will reflect these.
-        </p>
-      </div>
-
-      {horizons.map((horizon) => (
-        <div key={horizon} className="flex flex-col gap-2.5">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-            {HORIZON_LABELS[horizon]}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {GOALS.filter((g) => g.horizon === horizon).map((goal) => {
-              const selected = form.selectedGoalIds.includes(goal.id);
-              return (
-                <button
-                  key={goal.id}
-                  onClick={() => toggleGoal(goal.id)}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all duration-150 ${
-                    selected
-                      ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-700"
-                      : "bg-white/60 border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
-                  }`}
-                >
-                  {selected && <span className="mr-1.5">✓</span>}
-                  {goal.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      <p className="text-xs text-slate-500">
-        No goals selected? That&rsquo;s okay — we&rsquo;ll still build your action plan.
-      </p>
-    </div>
-  );
-}
-
-// ─── Step 5: Risk tolerance ────────────────────────────────────────────────────
-
-const RISK_OPTIONS: {
-  value: RiskTolerance;
-  label: string;
-  description: string;
-  icon: string;
-}[] = [
-  {
-    value: "conservative",
-    label: "Conservative",
-    description: "Stability matters most. Market losses stress me out.",
-    icon: "🛡️",
-  },
-  {
-    value: "moderate",
-    label: "Moderate",
-    description: "I can handle ups and downs for better long-term returns.",
-    icon: "⚖️",
-  },
-  {
-    value: "aggressive",
-    label: "Aggressive",
-    description: "I'm in for the long haul. Volatility is the price of growth.",
-    icon: "🚀",
-  },
-];
-
-function StepRisk({
-  value,
-  onChange,
-}: {
-  value: RiskTolerance | "";
-  onChange: (v: RiskTolerance) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800 mb-1">
-          Risk tolerance
-        </h2>
-        <p className="text-sm text-slate-600">
-          This shapes your recommended portfolio allocation.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {RISK_OPTIONS.map((opt) => {
-          const selected = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onChange(opt.value)}
-              className={`flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-150 ${
-                selected
-                  ? "bg-emerald-500/15 border-emerald-500/50"
-                  : "bg-white/50 border-slate-200 hover:border-slate-300"
-              }`}
-            >
-              <span className="text-2xl mt-0.5">{opt.icon}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-3">
-                  <p
-                    className={`text-sm font-semibold ${
-                      selected ? "text-emerald-700" : "text-slate-700"
-                    }`}
-                  >
-                    {opt.label}
-                  </p>
-                  {selected && (
-                    <span className="text-emerald-600 text-xs font-medium shrink-0">
-                      Selected ✓
-                    </span>
-                  )}
+      {/* Transcript */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 sm:px-6">
+        <div className="max-w-lg mx-auto w-full flex flex-col gap-3 py-4">
+          {messages.map((m) =>
+            m.role === "bot" ? (
+              <div key={m.id} className="flex items-end gap-2 max-w-[88%]">
+                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mb-0.5">
+                  <TrendingUp size={11} className="text-white" strokeWidth={2.5} />
                 </div>
-                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                  {opt.description}
-                </p>
+                <div className="bg-white/90 text-slate-800 text-sm leading-relaxed rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm">
+                  {m.text}
+                </div>
               </div>
-            </button>
-          );
-        })}
+            ) : (
+              <div key={m.id} className="self-end max-w-[85%]">
+                <div className="bg-emerald-500 text-white text-sm leading-relaxed rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm">
+                  {m.text}
+                </div>
+              </div>
+            )
+          )}
+          {typing && (
+            <div className="flex items-end gap-2">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                <TrendingUp size={11} className="text-white" strokeWidth={2.5} />
+              </div>
+              <div className="bg-white/90 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Composer */}
+      <div className="shrink-0 border-t border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="max-w-lg mx-auto w-full px-4 sm:px-6 py-4">
+          {error && <p className="text-xs text-red-400 mb-2">{error}</p>}
+
+          {/* Quick-reply chips by step */}
+          {!typing && current === "intro" && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Chip primary onClick={() => { pushUser("Let's go"); ask("age"); }}>Let&rsquo;s go →</Chip>
+              <Chip onClick={useSample}>Use sample data</Chip>
+            </div>
+          )}
+
+          {!typing && current === "employment" && (
+            <div className="grid grid-cols-2 gap-2">
+              {EMPLOYMENT_OPTIONS.map((o) => (
+                <Chip key={o.value} onClick={() => chooseEmployment(o)}>{o.icon} {o.label}</Chip>
+              ))}
+            </div>
+          )}
+
+          {!typing && current === "risk" && (
+            <div className="grid grid-cols-3 gap-2">
+              {RISK_OPTIONS.map((o) => (
+                <Chip key={o.value} onClick={() => chooseRisk(o)}>{o.icon} {o.label}</Chip>
+              ))}
+            </div>
+          )}
+
+          {!typing && current === "debtsAsk" && (
+            <div className="flex gap-2">
+              <Chip primary onClick={() => answerDebtsAsk(true)}>Yes, I have debt</Chip>
+              <Chip onClick={() => answerDebtsAsk(false)}>No debts</Chip>
+            </div>
+          )}
+
+          {!typing && current === "debtMore" && (
+            <div className="flex gap-2">
+              <Chip onClick={() => answerDebtMore(true)}>Add another</Chip>
+              <Chip primary onClick={() => answerDebtMore(false)}>That&rsquo;s all</Chip>
+            </div>
+          )}
+
+          {!typing && current === "goals" && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {GOALS.map((g) => {
+                  const on = form.selectedGoalIds.includes(g.id);
+                  return (
+                    <button
+                      key={g.id}
+                      onClick={() => toggleGoal(g.id)}
+                      className={`text-xs font-medium rounded-full px-3 py-2 border transition-colors flex items-center gap-1.5 ${
+                        on ? "bg-emerald-500 border-emerald-400 text-white" : "bg-white/10 border-white/20 text-white/80 hover:border-white/40"
+                      }`}
+                    >
+                      {on && <Check size={12} />} {g.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={submitGoals}
+                className="self-end inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl px-5 py-2.5"
+              >
+                Continue <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
+
+          {/* Text / amount composer */}
+          {!typing && showComposerInput && (
+            <form
+              onSubmit={(e) => { e.preventDefault(); isText ? sendDebtField() : current.startsWith("debt") ? sendDebtField() : sendValue(); }}
+              className="flex items-center gap-2"
+            >
+              <div className="relative flex-1 flex items-center">
+                {currencySteps.includes(current) && (
+                  <span className="absolute left-3.5 text-slate-400 text-sm pointer-events-none">$</span>
+                )}
+                <input
+                  autoFocus
+                  inputMode={isText ? "text" : "decimal"}
+                  value={inputVal}
+                  onChange={(e) => { setInputVal(e.target.value); setError(""); }}
+                  placeholder={
+                    current === "age" ? "32" :
+                    current === "debtName" ? "Credit card" :
+                    current === "debtRate" ? "22" :
+                    "0"
+                  }
+                  className={`w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-sm py-3 ${
+                    currencySteps.includes(current) ? "pl-8" : "pl-4"
+                  } ${current === "debtRate" ? "pr-9" : "pr-4"} focus:outline-none focus:ring-2 focus:ring-emerald-500/60`}
+                />
+                {current === "debtRate" && (
+                  <span className="absolute right-3.5 text-slate-400 text-sm pointer-events-none">%</span>
+                )}
+              </div>
+              {SKIPPABLE.has(current) && (
+                <button type="button" onClick={skip} className="text-sm text-white/50 hover:text-white/80 px-2">
+                  Skip
+                </button>
+              )}
+              <button
+                type="submit"
+                className="shrink-0 inline-flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl w-11 h-11"
+                aria-label="Send"
+              >
+                <ArrowRight size={18} />
+              </button>
+            </form>
+          )}
+
+          <p className="text-center text-[11px] text-white/30 mt-3">
+            Your data stays in your browser — never sent to a server.
+          </p>
+        </div>
       </div>
     </div>
+  );
+}
+
+function Chip({ children, onClick, primary }: { children: React.ReactNode; onClick: () => void; primary?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-sm font-medium rounded-xl px-4 py-2.5 border transition-colors text-center ${
+        primary
+          ? "bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-400"
+          : "bg-white/10 border-white/20 text-white/85 hover:bg-white/20 hover:border-white/40"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

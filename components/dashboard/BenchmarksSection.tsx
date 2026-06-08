@@ -1,4 +1,4 @@
-import { Badge, mndColor, mndLabel, savingsRateColor, savingsRateLabel, emergencyFundColor, emergencyFundLabel, fidelityColor, fidelityLabel } from "@/components/ui/Badge";
+import { Badge, savingsRateColor, savingsRateLabel, emergencyFundColor, emergencyFundLabel, fidelityColor, fidelityLabel } from "@/components/ui/Badge";
 import { formatCurrencyFull, formatPercent, getSavingsRateTier, getEmergencyFundTier } from "@/lib/calculations";
 import type { FinancialMetrics } from "@/lib/types";
 
@@ -16,19 +16,27 @@ function getFedMedian(age: number): { median: number; ageGroup: string } {
   return { median: 409_900, ageGroup: "65+" };
 }
 
+// Rough "% of peers you're ahead of," estimated from the age-group median.
+// Net worth is ~log-normal; this approximates the percentile from the median.
+function peerPercentile(netWorth: number, median: number): number {
+  if (median <= 0) return 50;
+  if (netWorth <= 0) return 4;
+  const z = Math.log(netWorth / median) / 1.8; // ~SCF within-age spread
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp((-z * z) / 2);
+  let tail = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  const cdf = z > 0 ? 1 - tail : tail;
+  return Math.round(Math.min(99, Math.max(1, cdf * 100)));
+}
+
 export function BenchmarksSection({ metrics, currentAge }: Props) {
-  const { mndBenchmark, fidelityBenchmark, savingsRate, emergencyFundMonths, netWorth, annualIncome } = metrics;
+  const { fidelityBenchmark, savingsRate, emergencyFundMonths, netWorth } = metrics;
   const fedData = getFedMedian(currentAge);
   const aboveMedian = netWorth >= fedData.median;
+  const percentile = peerPercentile(netWorth, fedData.median);
 
   const srTier = getSavingsRateTier(savingsRate);
   const efTier = getEmergencyFundTier(emergencyFundMonths);
-
-  // Net worth vs target
-  const target = mndBenchmark.expectedNetWorth;
-  const nwProgressPct = target > 0 ? Math.min(100, Math.max(0, (netWorth / target) * 100)) : 0;
-  const nwGap = netWorth - target;
-  const aboveTarget = nwGap >= 0;
 
   const benchmarkCards = [
     {
@@ -64,67 +72,38 @@ export function BenchmarksSection({ metrics, currentAge }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Net worth hero card */}
+      {/* Net worth — simple: total + where you stand vs peers */}
       <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Net Worth Today
-          </p>
-          <Badge label={mndLabel(mndBenchmark.tier)} color={mndColor(mndBenchmark.tier)} />
+        <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">
+          Net Worth Today
+        </p>
+
+        <p className={`text-4xl font-bold leading-none mb-3 ${netWorth < 0 ? "text-red-600" : "text-slate-800"}`}>
+          {formatCurrencyFull(netWorth)}
+        </p>
+
+        <p className="text-sm font-semibold mb-3">
+          <span className={aboveMedian ? "text-emerald-600" : "text-blue-600"}>
+            Ahead of ~{percentile}% of people your age
+          </span>
+        </p>
+
+        {/* Peer position bar */}
+        <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${percentile}%`, backgroundColor: aboveMedian ? "#10b981" : "#3b82f6" }}
+          />
+        </div>
+        <div className="flex justify-between text-[11px] text-slate-400 mt-1.5">
+          <span>Behind peers</span>
+          <span>Ahead of peers</span>
         </div>
 
-        {/* Hero number */}
-        <div className="flex flex-col gap-1 mb-4">
-          <p className={`text-4xl font-bold leading-none ${netWorth < 0 ? "text-red-600" : "text-slate-800"}`}>
-            {formatCurrencyFull(netWorth)}
-          </p>
-          <p className={`text-sm font-medium ${aboveTarget ? "text-emerald-600" : "text-red-500"}`}>
-            {aboveTarget
-              ? `+${formatCurrencyFull(nwGap)} above target`
-              : `${formatCurrencyFull(Math.abs(nwGap))} below target`}
-          </p>
-        </div>
-
-        {/* Progress bar: current → target */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-slate-600">Progress to target ({formatCurrencyFull(target)})</span>
-            <span className="text-xs font-medium text-slate-700">{nwProgressPct.toFixed(0)}%</span>
-          </div>
-          <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${nwProgressPct}%`,
-                backgroundColor: aboveTarget ? "#10b981" : nwProgressPct >= 60 ? "#3b82f6" : "#ef4444",
-              }}
-            />
-          </div>
-          <p className="text-xs text-slate-500 mt-1.5">
-            Target based on age ({currentAge}) × income ÷ 10 — a widely used net worth benchmark
-          </p>
-        </div>
-
-        {/* Secondary stats */}
-        <div className="border-t border-slate-200 pt-4 flex flex-wrap gap-x-8 gap-y-3">
-          <div>
-            <p className="text-xs text-slate-500">Age</p>
-            <p className="text-sm font-semibold text-slate-800">{currentAge}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Annual income</p>
-            <p className="text-sm font-semibold text-slate-800">{formatCurrencyFull(annualIncome)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Fed Reserve median ({fedData.ageGroup})</p>
-            <p className={`text-sm font-semibold ${aboveMedian ? "text-emerald-600" : "text-slate-600"}`}>
-              {formatCurrencyFull(fedData.median)}{" "}
-              <span className="text-xs font-normal text-slate-500">
-                — you&rsquo;re {aboveMedian ? "above" : "below"} median
-              </span>
-            </p>
-          </div>
-        </div>
+        <p className="text-xs text-slate-500 mt-3">
+          Estimated from Federal Reserve data — the median net worth for ages {fedData.ageGroup} is{" "}
+          {formatCurrencyFull(fedData.median)}.
+        </p>
       </div>
 
       {/* Other benchmark cards */}

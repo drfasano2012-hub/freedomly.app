@@ -7,6 +7,30 @@ See `PROCESS.md` for how changes get made and shipped.
 
 ---
 
+## 2026-06-08
+
+- **Checkup → chat:** Replaced the 5-step wizard with a personable conversational
+  flow (`app/checkup/page.tsx`) — Freedomly asks one question at a time as chat
+  bubbles; users type amounts or tap quick-reply chips. Opens with a "what is
+  Freedomly" intro, branches for debts, multi-select goals, and flows into the
+  dashboard. Reuses the same data model + calculations. Guided (no AI/backend).
+- **Dashboard — Freedom simulator:** The Freedom Age card now has two live levers
+  (target monthly spending + monthly investing) with −/+ steppers and sliders;
+  freedom age updates in real time ("free at 48 — 5 years earlier"), with a
+  cash-flow feasibility note. `calcAdjustedFreedomAge` now takes an explicit
+  monthly investment.
+- **Dashboard — Net worth simplified:** `BenchmarksSection` net-worth card reduced
+  to total net worth + "ahead of ~X% of people your age" (percentile estimated
+  from the Federal Reserve age-group median). Removed the MND target bar and
+  secondary stat clutter.
+- **Dashboard layout:** Removed the Recommended Portfolio section; moved the Action
+  Plan up to right after the Financial Snapshot.
+- **Homepage:** Hero subhead reframed toward financial independence + optionality;
+  beta badge on the logo; ends after "Five minutes to clarity"; richer Snapshot /
+  Trajectory / hero-simulator visuals (donut gauge, gradient area charts).
+- **Mobile:** Header CTA hidden below `sm`; sticky "Start your checkup" bar appears
+  on scroll (`components/MobileStickyCTA.tsx`); tighter section spacing.
+
 ## 2026-05-31
 
 - **Homepage redesign:** Rebuilt around the new positioning. Hero now leads

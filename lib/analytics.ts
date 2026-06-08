@@ -26,6 +26,8 @@ export type AnalyticsEvent =
   | "freedom_age_slider_used"
   | "learn_module_opened"
   | "learn_module_completed"
+  | "action_step_expanded"
+  | "action_completed"
   | "checkup_edited"
   | "home_simulator_used";
 
