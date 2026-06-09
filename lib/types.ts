@@ -98,6 +98,7 @@ export interface ActionItem {
   id: string;
   text: string;
   detail: string;
+  impact?: string;
 }
 
 export interface ActionPlanResult {

@@ -1,21 +1,25 @@
 import { TrendingUp, Wallet, Shield, BarChart3 } from "lucide-react";
 import { Badge, savingsRateColor, savingsRateLabel, emergencyFundColor, emergencyFundLabel } from "@/components/ui/Badge";
-import { formatCurrency, formatPercent, getSavingsRateTier, getEmergencyFundTier, getSurplusTier, getNetWorthTier } from "@/lib/calculations";
+import {
+  formatCurrency,
+  formatPercent,
+  getSavingsRateTier,
+  getEmergencyFundTier,
+  getSurplusTier,
+  getNetWorthTier,
+  getFedMedian,
+  peerPercentile,
+} from "@/lib/calculations";
 import type { FinancialMetrics } from "@/lib/types";
 
 interface Props {
   metrics: FinancialMetrics;
   monthlyTakeHome: number;
+  currentAge: number;
 }
 
-export function SnapshotCards({ metrics, monthlyTakeHome }: Props) {
-  const {
-    savingsRate,
-    monthlySurplus,
-    emergencyFundMonths,
-    netWorth,
-    annualIncome,
-  } = metrics;
+export function SnapshotCards({ metrics, monthlyTakeHome, currentAge }: Props) {
+  const { savingsRate, monthlySurplus, emergencyFundMonths, netWorth, annualIncome } = metrics;
 
   const srTier = getSavingsRateTier(savingsRate);
   const efTier = getEmergencyFundTier(emergencyFundMonths);
@@ -27,12 +31,24 @@ export function SnapshotCards({ metrics, monthlyTakeHome }: Props) {
   const nwColor = nwTier === "strong" ? "green" : nwTier === "positive" ? "neutral" : "red";
   const nwLabel = nwTier === "strong" ? "Strong" : nwTier === "positive" ? "Positive" : "Behind";
 
+  const fed = getFedMedian(currentAge);
+  const percentile = peerPercentile(netWorth, fed.median);
+
   const cards = [
+    {
+      icon: BarChart3,
+      label: "Net Worth",
+      value: formatCurrency(netWorth),
+      valueColor: netWorth < 0 ? "text-red-600" : "text-slate-800",
+      badge: <Badge label={nwLabel} color={nwColor} />,
+      sub: `Ahead of ~${percentile}% of people your age`,
+    },
     {
       icon: TrendingUp,
       label: "Savings Rate",
       value: formatPercent(savingsRate, 1),
       badge: <Badge label={savingsRateLabel(srTier)} color={savingsRateColor(srTier)} />,
+      sub: null,
     },
     {
       icon: Wallet,
@@ -40,28 +56,23 @@ export function SnapshotCards({ metrics, monthlyTakeHome }: Props) {
       value: `${monthlySurplus < 0 ? "-" : "+"}${formatCurrency(Math.abs(monthlySurplus))}`,
       valueColor: monthlySurplus < 0 ? "text-red-600" : "text-slate-800",
       badge: <Badge label={surplusLabel} color={surplusColor} />,
+      sub: null,
     },
     {
       icon: Shield,
       label: "Emergency Fund",
       value: `${emergencyFundMonths.toFixed(1)} mo`,
       badge: <Badge label={emergencyFundLabel(efTier)} color={emergencyFundColor(efTier)} />,
-    },
-    {
-      icon: BarChart3,
-      label: "Net Worth",
-      value: formatCurrency(netWorth),
-      valueColor: netWorth < 0 ? "text-red-600" : "text-slate-800",
-      badge: <Badge label={nwLabel} color={nwColor} />,
+      sub: null,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map(({ icon: Icon, label, value, valueColor, badge }) => (
+    <div className="grid grid-cols-2 gap-4 h-full">
+      {cards.map(({ icon: Icon, label, value, valueColor, badge, sub }) => (
         <div
           key={label}
-          className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-4 sm:p-5 flex flex-col gap-3"
+          className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-4 sm:p-5 flex flex-col gap-2"
         >
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-600">{label}</p>
@@ -70,7 +81,10 @@ export function SnapshotCards({ metrics, monthlyTakeHome }: Props) {
           <p className={`text-2xl font-bold leading-none ${valueColor ?? "text-slate-800"}`}>
             {value}
           </p>
-          <div>{badge}</div>
+          <div className="mt-auto flex flex-col gap-1">
+            <div>{badge}</div>
+            {sub && <p className="text-[11px] text-slate-500 leading-tight">{sub}</p>}
+          </div>
         </div>
       ))}
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, Circle, AlertCircle, Target, ChevronDown, ListChecks } from "lucide-react";
+import { CheckCircle2, Circle, AlertCircle, Target, ChevronDown, ListChecks, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import type { ActionPlanResult, Goal, GoalHorizon, EmploymentType } from "@/lib/types";
@@ -47,6 +47,48 @@ const PLAYBOOKS: Record<string, string[]> = {
     "Cancel the dead weight today (aim for 3+).",
     "Redirect that freed-up money straight to savings — don't let it evaporate.",
   ],
+  emergency_floor: [
+    "Open a separate high-yield savings account (Ally, Marcus, Capital One — ~4–5% APY) so you won't dip into it.",
+    "Set the target at 3× your monthly spending — a floor, not a vault.",
+    "Automate a transfer every payday until you hit it.",
+    "Once you're at 3 months, redirect new savings to investing — don't keep piling up idle cash.",
+  ],
+  create_surplus: [
+    "List your take-home vs. your spending to see the gap you need to close.",
+    "Cut the biggest 2–3 expenses you won't miss (subscriptions, dining, unused memberships).",
+    "Lift income where you can — a raise, freelance work, or selling unused stuff.",
+    "Automate even $200/month into investing the day it becomes available.",
+  ],
+  capture_match: [
+    "Check your 401(k) plan docs (or ask HR) for the match formula — e.g. 100% up to 4%.",
+    "Set your contribution to at least hit the full match — anything less leaves free money behind.",
+    "Confirm it's invested in a low-cost index fund, not sitting in cash.",
+    "Revisit after any raise so your contribution keeps pace.",
+  ],
+  cut_spending: [
+    "Pull your last 2–3 months of statements and total your recurring + discretionary spend.",
+    "Find the cut in the big rocks first — housing, car, food, subscriptions.",
+    "Cancel or downgrade today, and automate the freed-up money into investing so it doesn't evaporate.",
+    "Remember it's a double win: you invest more AND your freedom number drops.",
+  ],
+  invest_more: [
+    "Increase your automatic monthly investment by the target amount, on payday.",
+    "Send raises and bonuses straight to investing before lifestyle creep claims them.",
+    "Use low-cost broad index funds — keep fees under ~0.1%.",
+    "Bump it again in a few months; you adapt faster than you'd think.",
+  ],
+  accessible_investing: [
+    "After capturing any employer match, open a taxable brokerage account (Fidelity, Schwab, Vanguard).",
+    "Roth IRA contributions (not earnings) can be withdrawn anytime — a flexible bridge to early freedom.",
+    "Read up on the Roth conversion ladder and Rule 72(t) for tapping a 401(k) before 59½ penalty-free.",
+    "Aim for enough outside retirement accounts to cover your early-freedom years.",
+  ],
+  optimize_allocation: [
+    "Pick a stock/bond split that matches your risk tolerance and timeline.",
+    "Consolidate into a few broad, low-cost index funds; avoid high-fee products.",
+    "Rebalance back to your target about once a year.",
+    "Keep only the cash you actually need — idle cash loses to inflation.",
+  ],
 };
 
 /** Retirement steps differ by employment status — this is the whole point of asking. */
@@ -78,7 +120,12 @@ const RETIREMENT_PLAYBOOKS: Record<EmploymentType, string[]> = {
 };
 
 function playbookFor(actionId: string, emp: EmploymentType): string[] {
-  if (actionId === "max_tax_advantaged" || actionId === "roth_ira") return RETIREMENT_PLAYBOOKS[emp];
+  if (
+    actionId === "start_investing" ||
+    actionId === "max_tax_advantaged" ||
+    actionId === "roth_ira"
+  )
+    return RETIREMENT_PLAYBOOKS[emp];
   return PLAYBOOKS[actionId] ?? [];
 }
 
@@ -195,6 +242,20 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
                       {action.text}
                     </p>
                     <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{action.detail}</p>
+
+                    {action.impact && (
+                      <span
+                        className={cn(
+                          "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-tight",
+                          isDone
+                            ? "bg-slate-100 text-slate-400"
+                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        )}
+                      >
+                        <Zap size={11} className="shrink-0" aria-hidden="true" />
+                        {action.impact}
+                      </span>
+                    )}
 
                     {steps.length > 0 && (
                       <button

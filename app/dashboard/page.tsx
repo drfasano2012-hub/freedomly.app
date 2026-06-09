@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { calcAllMetrics } from "@/lib/calculations";
 import { track } from "@/lib/analytics";
@@ -12,6 +13,7 @@ import { SnapshotCards } from "@/components/dashboard/SnapshotCards";
 import { BenchmarksSection } from "@/components/dashboard/BenchmarksSection";
 import { DetailCards } from "@/components/dashboard/DetailCards";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
+import { ProgressSection } from "@/components/dashboard/ProgressSection";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -48,15 +50,35 @@ export default function DashboardPage() {
     );
   }
 
+  const fa = metrics.freedomAge;
+  const topAction = metrics.actionPlan.topActions[0];
+  const headline =
+    fa.status === "already_reached"
+      ? "You've reached financial freedom — your investments cover your living expenses."
+      : fa.status === "normal" && fa.freedomAge !== null
+      ? `You're on track to be financially free at ${fa.freedomAge}.`
+      : "Let's chart your path to financial independence.";
+
   return (
     <div className="min-h-screen bg-transparent">
       <AppNav />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
 
-        {/* Top row: Health Score + Freedom Age */}
+        {/* Personalized headline */}
+        <div className="bg-white/[0.06] border border-white/12 rounded-2xl px-5 py-5 sm:px-6">
+          <p className="text-lg sm:text-2xl font-bold text-white leading-snug">{headline}</p>
+          {topAction && (
+            <p className="text-sm text-white/60 mt-1.5">
+              Your biggest lever right now:{" "}
+              <span className="text-emerald-300 font-medium">{topAction.text}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Where you stand */}
         <section className="flex flex-col gap-2">
-          <SectionLabel>Overview</SectionLabel>
+          <SectionLabel>Where you stand</SectionLabel>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
               <HealthScoreCard
@@ -65,27 +87,34 @@ export default function DashboardPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <FreedomAgeCard
-                result={metrics.freedomAge}
-                currentAge={inputs.currentAge}
-                monthlySurplus={metrics.monthlySurplus}
-                monthlySpending={inputs.monthlySpending}
+              <SnapshotCards
+                metrics={metrics}
                 monthlyTakeHome={inputs.monthlyTakeHome}
-                totalInvestedPlusCash={metrics.totalInvestments + inputs.cashSavings}
+                currentAge={inputs.currentAge}
               />
             </div>
           </div>
         </section>
 
-        {/* Snapshot cards */}
+        {/* Your progress — renders only once there's history/deltas/milestones */}
+        <ProgressSection metrics={metrics} />
+
+        {/* Where you're headed */}
         <section className="flex flex-col gap-2">
-          <SectionLabel>Financial Snapshot</SectionLabel>
-          <SnapshotCards metrics={metrics} monthlyTakeHome={inputs.monthlyTakeHome} />
+          <SectionLabel>Where you&rsquo;re headed</SectionLabel>
+          <FreedomAgeCard
+            result={metrics.freedomAge}
+            currentAge={inputs.currentAge}
+            monthlySurplus={metrics.monthlySurplus}
+            monthlySpending={inputs.monthlySpending}
+            monthlyTakeHome={inputs.monthlyTakeHome}
+            totalInvestedPlusCash={metrics.totalInvestments + inputs.cashSavings}
+          />
         </section>
 
-        {/* Action plan — top 3 recommendations, surfaced early */}
+        {/* Your next move */}
         <section className="flex flex-col gap-2">
-          <SectionLabel>Action plan</SectionLabel>
+          <SectionLabel>Your next move</SectionLabel>
           <ActionPlan
             actionPlan={metrics.actionPlan}
             goals={inputs.goals}
@@ -93,17 +122,17 @@ export default function DashboardPage() {
           />
         </section>
 
-        {/* Benchmarks */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Benchmarks</SectionLabel>
-          <BenchmarksSection metrics={metrics} currentAge={inputs.currentAge} />
-        </section>
-
-        {/* Detail cards (B–E) */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Your numbers in detail</SectionLabel>
-          <DetailCards metrics={metrics} inputs={inputs} />
-        </section>
+        {/* The details — collapsible */}
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white/70 uppercase tracking-wider px-1 select-none">
+            <span>The details</span>
+            <ChevronDown size={14} className="transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="mt-4 flex flex-col gap-4">
+            <DetailCards metrics={metrics} inputs={inputs} />
+            <BenchmarksSection metrics={metrics} currentAge={inputs.currentAge} />
+          </div>
+        </details>
 
       </main>
 

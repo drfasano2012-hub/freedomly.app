@@ -87,15 +87,6 @@ export default function LandingPage() {
                   See where you stand &rarr;
                 </Button>
               </Link>
-              <Link href="/checkup">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="text-base font-medium px-6 py-4 rounded-2xl"
-                >
-                  Try it with sample numbers
-                </Button>
-              </Link>
             </div>
             <p className="mt-5 text-xs text-white/40 max-w-md">
               No account or bank linking required &middot; Benchmarked against Federal

@@ -28,6 +28,7 @@ export type AnalyticsEvent =
   | "learn_module_completed"
   | "action_step_expanded"
   | "action_completed"
+  | "milestone_reached"
   | "checkup_edited"
   | "home_simulator_used";
 

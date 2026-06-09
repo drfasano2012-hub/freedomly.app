@@ -260,6 +260,25 @@ export function calcPortfolioAllocation(score: number): PortfolioAllocationResul
 
 // ─── Action plan ──────────────────────────────────────────────────────────────
 
+/** Years to financial freedom under a hypothetical plan — same 7%/4%, 25× model as calcFreedomAge. */
+export function yearsToFreedomGiven(p: {
+  monthlyInvestment: number;
+  monthlySpending: number;
+  startingValue: number;
+}): number | null {
+  const fiNumber = p.monthlySpending * 12 * 25;
+  const r = 0.07 / 12;
+  if (p.startingValue >= fiNumber) return 0;
+  if (p.monthlyInvestment <= 0) return null;
+  let fv = p.startingValue;
+  let m = 0;
+  while (fv < fiNumber && m < 600) {
+    fv = fv * (1 + r) + p.monthlyInvestment;
+    m++;
+  }
+  return m >= 600 ? null : m / 12;
+}
+
 export function generateActionPlan(
   inputs: UserInputs,
   metrics: {
@@ -272,29 +291,9 @@ export function generateActionPlan(
 ): ActionPlanResult {
   const goingWell: string[] = [];
   const needsAttention: string[] = [];
-  const topActions: ActionItem[] = [];
-
   const { savingsRate, emergencyFundMonths, highInterestDebt, totalInvestments, monthlySurplus } = metrics;
-
-  // Employment-aware retirement framing (W2 vs self-employed/business owner vs not working)
   const emp = inputs.employmentType ?? "w2";
   const selfEmployed = emp === "self_employed" || emp === "business_owner";
-
-  const taxAdvText = selfEmployed
-    ? "Open a Solo 401(k) or SEP-IRA"
-    : emp === "not_employed"
-      ? "Open a (spousal) Roth IRA"
-      : "Maximize tax-advantaged accounts";
-  const taxAdvDetail = selfEmployed
-    ? "As self-employed, you can shelter far more than a regular IRA — a Solo 401(k) or SEP-IRA lets you contribute as both employee and employer."
-    : emp === "not_employed"
-      ? "With no earned income a 401(k) isn't available — but a spousal Roth IRA (if your spouse has earned income) keeps your tax-free investing going."
-      : "Contribute enough to your 401(k) to capture your full employer match, then max your Roth IRA ($7,000/year).";
-
-  const rothText = selfEmployed ? "Open a Solo 401(k) or SEP-IRA" : "Open a Roth IRA";
-  const rothDetail = selfEmployed
-    ? "You have a surplus but no investments yet. As self-employed, a Solo 401(k) or SEP-IRA shelters far more than a regular IRA — open one to start investing tax-advantaged."
-    : "You have a positive surplus but no investments yet. A Roth IRA grows tax-free — start with even $50/month.";
 
   // What's going well
   if (savingsRate >= 0.2) goingWell.push("Excellent savings rate — you're building wealth fast");
@@ -312,52 +311,137 @@ export function generateActionPlan(
   if (savingsRate < 0.1) needsAttention.push("Savings rate below 10% limits long-term wealth building");
   if (totalInvestments === 0 && monthlySurplus > 0) needsAttention.push("No investments yet — idle money loses to inflation");
 
-  // Prioritized top 3 actions
-  const candidates: ActionItem[] = [
-    {
-      id: "high_interest_debt",
-      text: "Eliminate high-interest debt",
-      detail: `You have ${formatCurrency(highInterestDebt)} in debt above 10% APR. No investment reliably beats 10%+ guaranteed returns from paying this off.`,
-    },
-    {
-      id: "emergency_fund",
-      text: "Build your 3-month emergency fund",
-      detail: `You currently have ${emergencyFundMonths.toFixed(1)} months covered. Aim for ${inputs.monthlySpending * 3 > inputs.cashSavings ? formatCurrency(inputs.monthlySpending * 3 - inputs.cashSavings) + " more" : "your current target"} to reach 3 months.`,
-    },
-    {
-      id: "savings_rate",
-      text: "Push your savings rate to 15%",
-      detail: `You're currently saving ${Math.round(savingsRate * 100)}% of take-home. Each extra 1% saved is years off your freedom age.`,
-    },
-    {
-      id: "roth_ira",
-      text: rothText,
-      detail: rothDetail,
-    },
-    {
-      id: "max_tax_advantaged",
-      text: taxAdvText,
-      detail: taxAdvDetail,
-    },
-    {
-      id: "audit_expenses",
-      text: "Audit your recurring subscriptions",
-      detail: "A one-time expense audit typically uncovers $100–300/month in forgotten subscriptions and unused services.",
-    },
-  ];
+  // ── FI-impact action engine: rank moves by years off the freedom date ──
+  const startingValue = totalInvestments + inputs.cashSavings;
+  const baseYears = yearsToFreedomGiven({
+    monthlyInvestment: monthlySurplus,
+    monthlySpending: inputs.monthlySpending,
+    startingValue,
+  });
+  const projectedAge = baseYears !== null ? inputs.currentAge + baseYears : null;
 
-  // Apply priority order from PRD §6.2.7
-  if (highInterestDebt > 0) topActions.push(candidates[0]);
-  if (emergencyFundMonths < 3) topActions.push(candidates[1]);
-  if (savingsRate < 0.15) topActions.push(candidates[2]);
-  if (totalInvestments === 0 && monthlySurplus > 0) topActions.push(candidates[3]);
-  if (totalInvestments > 0) topActions.push(candidates[4]);
-  topActions.push(candidates[5]);
+  type Cand = ActionItem & { tier: number; impactYears?: number; eligible: boolean };
+  const cands: Cand[] = [];
+
+  // Tier 0 — risk-gated to the top
+  if (highInterestDebt > 0) {
+    const annualInterest = inputs.debts
+      .filter((d) => d.rate >= 0.1)
+      .reduce((s, d) => s + d.balance * d.rate, 0);
+    cands.push({
+      tier: 0, eligible: true, id: "high_interest_debt",
+      text: "Eliminate high-interest debt",
+      detail: `You have ${formatCurrency(highInterestDebt)} above 10% APR. No investment reliably beats that — paying it off is a guaranteed return.`,
+      impact: `${formatCurrency(annualInterest)}/yr in interest — a guaranteed return`,
+    });
+  }
+  if (emergencyFundMonths < 3) {
+    const gap = inputs.monthlySpending * 3 - inputs.cashSavings;
+    cands.push({
+      tier: 0, eligible: true, id: "emergency_floor",
+      text: "Build a 3-month safety floor",
+      detail: `You have ${emergencyFundMonths.toFixed(1)} months covered. ${gap > 0 ? `Set aside ${formatCurrency(gap)} more` : "You're nearly there"} to reach 3 months — enough to protect your plan without over-hoarding cash you could be investing.`,
+      impact: "Protects your plan from a setback",
+    });
+  }
+
+  // Tier 1 — prerequisites & free money
+  if (monthlySurplus <= 0) {
+    cands.push({
+      tier: 1, eligible: true, id: "create_surplus",
+      text: "Create a positive monthly surplus",
+      detail: "Your spending meets or exceeds your take-home, so there's nothing to invest yet. Freeing up even $200/month — by trimming expenses or raising income — starts your path to freedom.",
+      impact: "The first step — starts the clock",
+    });
+  }
+  if (emp === "w2") {
+    cands.push({
+      tier: 1, eligible: true, id: "capture_match",
+      text: "Capture your full employer match",
+      detail: "If your employer matches 401(k) contributions, put in at least enough to get all of it — an instant 50–100% return you can't get anywhere else.",
+      impact: "Instant 50–100% return — free money",
+    });
+  }
+
+  // Tier 2 — the FI engine (ranked by years off your freedom date)
+  if (monthlySurplus > 0) {
+    const cut = Math.max(200, Math.round((inputs.monthlySpending * 0.1) / 50) * 50);
+    const cutYears = yearsToFreedomGiven({
+      monthlyInvestment: monthlySurplus + cut,
+      monthlySpending: Math.max(0, inputs.monthlySpending - cut),
+      startingValue,
+    });
+    const cutDelta = baseYears !== null && cutYears !== null ? baseYears - cutYears : undefined;
+    cands.push({
+      tier: 2, eligible: true, id: "cut_spending",
+      text: `Trim ${formatCurrency(cut)}/mo from your spending`,
+      detail: `Cutting ${formatCurrency(cut)}/mo does double duty — it frees ${formatCurrency(cut)} more to invest AND lowers your freedom number by ${formatCurrency(cut * 12 * 25)} (you need 25× less).`,
+      impact: cutDelta !== undefined && cutDelta >= 0.5 ? `Free ~${Math.round(cutDelta)} yr${Math.round(cutDelta) !== 1 ? "s" : ""} sooner` : "Lowers your freedom number",
+      impactYears: cutDelta,
+    });
+
+    const more = Math.max(200, Math.round((inputs.monthlyTakeHome * 0.05) / 50) * 50);
+    const moreYears = yearsToFreedomGiven({
+      monthlyInvestment: monthlySurplus + more,
+      monthlySpending: inputs.monthlySpending,
+      startingValue,
+    });
+    const moreDelta = baseYears !== null && moreYears !== null ? baseYears - moreYears : undefined;
+    cands.push({
+      tier: 2, eligible: true, id: "invest_more",
+      text: `Invest ${formatCurrency(more)} more each month`,
+      detail: `Adding ${formatCurrency(more)}/mo to what you invest compounds at 7% and pulls your freedom date closer.`,
+      impact: moreDelta !== undefined && moreDelta >= 0.5 ? `Free ~${Math.round(moreDelta)} yr${Math.round(moreDelta) !== 1 ? "s" : ""} sooner` : "Speeds up your timeline",
+      impactYears: moreDelta,
+    });
+  }
+
+  if (totalInvestments === 0 && monthlySurplus > 0) {
+    cands.push({
+      tier: 2, eligible: true, id: "start_investing",
+      text: selfEmployed ? "Open a Solo 401(k) or brokerage and start investing" : "Open a Roth IRA or brokerage and start investing",
+      detail: selfEmployed
+        ? "You have a surplus but nothing invested. Idle cash earns ~0% and loses to inflation; invested at 7% it starts the clock toward freedom."
+        : "You have a surplus but nothing invested. A Roth IRA (contributions stay accessible) or a taxable brokerage puts that money to work — even $50/month starts compounding.",
+      impact: "Idle cash earns ~7%/yr vs 0%",
+      impactYears: (baseYears ?? 50) + 1, // top tier-2 move when you're not yet investing
+    });
+  }
+
+  // FI-first accessibility: freedom well before 59½ but money is locked in retirement accounts
+  const retirementHeavy = inputs.retirementAccounts > inputs.brokerageAccounts + inputs.hsaAccounts;
+  if (totalInvestments > 0 && projectedAge !== null && projectedAge < 59.5 && retirementHeavy) {
+    cands.push({
+      tier: 2, eligible: true, id: "accessible_investing",
+      text: "Build money you can use before 59½",
+      detail: "You're on track to reach freedom before 59½, but most of your investments sit in retirement accounts locked until then. After any employer match, route extra into a taxable brokerage or Roth (contributions are always withdrawable) so your money is reachable when you're free — a Roth conversion ladder or 72(t) can bridge the rest.",
+      impact: "Keeps your freedom money reachable",
+      impactYears: 0.4,
+    });
+  }
+
+  // Tier 3 — optimize
+  cands.push({
+    tier: 3, eligible: true, id: "optimize_allocation",
+    text: "Right-size your investment mix",
+    detail: "Match your stock/bond split to your risk tolerance and timeline, keep fees low with broad index funds, and avoid sitting in more cash than you need.",
+    impact: "Tune for steady long-term growth",
+  });
+
+  const topActions: ActionItem[] = cands
+    .filter((c) => c.eligible)
+    .sort((a, b) => {
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      if (a.tier === 2) return (b.impactYears ?? -1) - (a.impactYears ?? -1);
+      return 0;
+    })
+    .slice(0, 3)
+    .map(({ id, text, detail, impact }) => ({ id, text, detail, impact }));
 
   return {
     goingWell: goingWell.slice(0, 5),
     needsAttention: needsAttention.slice(0, 4),
-    topActions: topActions.slice(0, 3),
+    topActions,
   };
 }
 
@@ -578,4 +662,25 @@ export function formatCurrencyFull(value: number): string {
 
 export function formatPercent(value: number, decimals = 0): string {
   return `${(value * 100).toFixed(decimals)}%`;
+}
+
+// ─── Peer comparison (Federal Reserve SCF 2023 median net worth by age) ──────────
+export function getFedMedian(age: number): { median: number; ageGroup: string } {
+  if (age < 35) return { median: 39_000, ageGroup: "under 35" };
+  if (age < 45) return { median: 135_600, ageGroup: "35–44" };
+  if (age < 55) return { median: 247_200, ageGroup: "45–54" };
+  if (age < 65) return { median: 364_500, ageGroup: "55–64" };
+  return { median: 409_900, ageGroup: "65+" };
+}
+
+/** Rough "% of peers you're ahead of," estimated from the age-group median (log-normal). */
+export function peerPercentile(netWorth: number, median: number): number {
+  if (median <= 0) return 50;
+  if (netWorth <= 0) return 4;
+  const z = Math.log(netWorth / median) / 1.8; // ~SCF within-age spread
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp((-z * z) / 2);
+  const tail = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  const cdf = z > 0 ? 1 - tail : tail;
+  return Math.round(Math.min(99, Math.max(1, cdf * 100)));
 }
