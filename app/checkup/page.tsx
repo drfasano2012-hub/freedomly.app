@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { TrendingUp, ArrowRight, Check } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { getSampleData } from "@/lib/calculations";
 import { track } from "@/lib/analytics";
 import type {
   RiskTolerance,
@@ -343,18 +342,6 @@ export default function CheckupPage() {
     advance("goals");
   }
 
-  function useSample() {
-    pushUser("Use sample data");
-    track("sample_data_used");
-    setTyping(true);
-    window.setTimeout(() => {
-      setMessages((m) => [...m, { id: nextMsgId(), role: "bot", text: "Loading a sample profile… ✨" }]);
-      setTyping(false);
-      setInputs(getSampleData());
-      window.setTimeout(() => router.push("/dashboard"), 700);
-    }, 450);
-  }
-
   // ── Progress
   const pi = PROGRESS_ORDER.indexOf(current);
   const progress = current === "done" ? 100 : current === "intro" ? 4 : Math.round(((pi + 1) / PROGRESS_ORDER.length) * 100);
@@ -436,9 +423,8 @@ export default function CheckupPage() {
 
           {/* Quick-reply chips by step */}
           {!typing && current === "intro" && (
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex">
               <Chip primary onClick={() => { pushUser("Let's go"); ask("age"); }}>Let&rsquo;s go →</Chip>
-              <Chip onClick={useSample}>Use sample data</Chip>
             </div>
           )}
 
