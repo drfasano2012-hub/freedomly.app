@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CheckCircle2, Circle, Target, ChevronDown, ListChecks, Zap } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { CheckCircle2, Circle, Target, ChevronDown, ListChecks, Zap, BookOpen } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { awardActionXp } from "@/lib/learn-progress";
 import type { ActionPlanResult, Goal, GoalHorizon, EmploymentType } from "@/lib/types";
 
 interface Props {
@@ -134,6 +136,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
 
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
+  const [xpFlash, setXpFlash] = useState<string | null>(null);
 
   // Load completed actions from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
@@ -145,6 +148,11 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
     }
   }, []);
 
+  const showXpToast = useCallback((msg: string) => {
+    setXpFlash(msg);
+    setTimeout(() => setXpFlash(null), 2500);
+  }, []);
+
   function toggleDone(id: string) {
     setDoneIds((prev) => {
       const next = new Set(prev);
@@ -152,6 +160,8 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
       else {
         next.add(id);
         track("action_completed", { action_id: id });
+        const xp = awardActionXp(id);
+        if (xp > 0) showXpToast(`+${xp} XP — keep building! 🎯`);
       }
       try {
         localStorage.setItem(ACTIONS_KEY, JSON.stringify(Array.from(next)));
@@ -186,9 +196,16 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
               Your highest-impact moves — check them off as you do them.
             </p>
           </div>
-          <span className="shrink-0 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
-            {doneCount} of {topActions.length} done
-          </span>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+              {doneCount} of {topActions.length} done
+            </span>
+            {xpFlash && (
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1 animate-pulse">
+                {xpFlash}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* progress bar */}
@@ -257,20 +274,31 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
                       </span>
                     )}
 
-                    {steps.length > 0 && (
-                      <button
-                        onClick={() => toggleSteps(action.id)}
-                        aria-expanded={isOpen}
-                        className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
-                      >
-                        <ListChecks size={13} />
-                        {isOpen ? "Hide steps" : "How to do this"}
-                        <ChevronDown
-                          size={13}
-                          className={cn("transition-transform duration-200", isOpen && "rotate-180")}
-                        />
-                      </button>
-                    )}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                      {steps.length > 0 && (
+                        <button
+                          onClick={() => toggleSteps(action.id)}
+                          aria-expanded={isOpen}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                        >
+                          <ListChecks size={13} />
+                          {isOpen ? "Hide steps" : "How to do this"}
+                          <ChevronDown
+                            size={13}
+                            className={cn("transition-transform duration-200", isOpen && "rotate-180")}
+                          />
+                        </button>
+                      )}
+                      {action.lessonId && !isDone && (
+                        <Link
+                          href={`/learn/${action.lessonId}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700"
+                        >
+                          <BookOpen size={13} />
+                          Learn why this matters
+                        </Link>
+                      )}
+                    </div>
 
                     {isOpen && steps.length > 0 && (
                       <ol className="mt-3 flex flex-col gap-2.5 border-t border-slate-200 pt-3">

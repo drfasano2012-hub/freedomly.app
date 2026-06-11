@@ -428,6 +428,22 @@ export function generateActionPlan(
     impact: "Tune for steady long-term growth",
   });
 
+  // Lesson IDs that explain each action (links Learn → Action and Action → Learn)
+  const ACTION_LESSONS: Record<string, string> = {
+    high_interest_debt: "d-1",
+    emergency_floor: "ef-1",
+    emergency_fund: "ef-1",
+    create_surplus: "sr-1",
+    capture_match: "i-3",
+    cut_spending: "sr-2",
+    invest_more: "i-1",
+    start_investing: "i-1",
+    accessible_investing: "i-3",
+    optimize_allocation: "i-2",
+    savings_rate: "sr-3",
+    audit_expenses: "sr-2",
+  };
+
   const topActions: ActionItem[] = cands
     .filter((c) => c.eligible)
     .sort((a, b) => {
@@ -436,7 +452,10 @@ export function generateActionPlan(
       return 0;
     })
     .slice(0, 3)
-    .map(({ id, text, detail, impact }) => ({ id, text, detail, impact }));
+    .map(({ id, text, detail, impact }) => ({
+      id, text, detail, impact,
+      lessonId: ACTION_LESSONS[id],
+    }));
 
   return {
     goingWell: goingWell.slice(0, 5),
@@ -638,6 +657,33 @@ export function getSampleData(): UserInputs {
     riskTolerance: "moderate",
     employmentType: "w2",
   };
+}
+
+// ─── Potential score ─────────────────────────────────────────────────────────
+
+/** Simulate completing open top actions and return the score those actions could unlock. */
+export function calcPotentialScore(
+  breakdown: HealthScoreBreakdown,
+  topActions: ActionItem[]
+): number {
+  let { savingsRatePoints, emergencyFundPoints, debtPoints, investingPoints } = breakdown;
+  const ids = new Set(topActions.map((a) => a.id));
+
+  if (ids.has("high_interest_debt")) debtPoints = Math.max(debtPoints, 22);
+  if (ids.has("emergency_floor") || ids.has("emergency_fund")) emergencyFundPoints = 25;
+  if (ids.has("create_surplus") || ids.has("cut_spending") || ids.has("audit_expenses")) {
+    savingsRatePoints = Math.max(savingsRatePoints, 20);
+  }
+  if (
+    ids.has("start_investing") ||
+    ids.has("invest_more") ||
+    ids.has("capture_match") ||
+    ids.has("accessible_investing")
+  ) {
+    investingPoints = Math.max(investingPoints, 18);
+  }
+
+  return Math.min(100, savingsRatePoints + emergencyFundPoints + debtPoints + investingPoints);
 }
 
 // ─── Formatting utilities ────────────────────────────────────────────────────

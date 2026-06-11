@@ -31,7 +31,10 @@ export type AnalyticsEvent =
   | "milestone_reached"
   | "plan_sharpened"
   | "checkup_edited"
-  | "home_simulator_used";
+  | "home_simulator_used"
+  // learn system
+  | "lesson_opened"
+  | "lesson_completed";
 
 /** Property values we allow — primitives only, no objects/PII blobs. */
 type SafeProps = Record<string, string | number | boolean | undefined>;

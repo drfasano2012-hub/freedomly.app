@@ -1,251 +1,235 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, Star, Clock, CheckCircle2, Circle } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, ArrowRight, CheckCircle2, Lock, Zap, Flame } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
-import { LEARN_MODULES, type LearnTag } from "@/content/learn";
-
-const ALL_TAGS: LearnTag[] = ["Foundation", "Debt", "Investing", "FIRE"];
-const LEARN_PROGRESS_KEY = "freedomly_learn_completed";
-
-const TAG_COLORS: Record<LearnTag, string> = {
-  Foundation: "bg-sky-100 text-sky-700 border-sky-200",
-  Debt: "bg-red-100 text-red-700 border-red-200",
-  Investing: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  FIRE: "bg-orange-100 text-orange-700 border-orange-200",
-};
+import { TRACKS, LESSONS, getLessonsByTrack } from "@/content/lessons";
+import {
+  loadProgress,
+  getLevel,
+  getLevelProgress,
+  getStreak,
+  getTrackCompletionCount,
+} from "@/lib/learn-progress";
+import { useFinancialData } from "@/hooks/useFinancialData";
+import { calcAllMetrics } from "@/lib/calculations";
+import { getRecommendedLesson } from "@/lib/learn-progress";
+import type { LearnProgress } from "@/lib/types";
 
 export default function LearnPage() {
-  const [activeFilter, setActiveFilter] = useState<LearnTag | "All">("All");
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const { inputs, hydrated } = useFinancialData();
+  const [progress, setProgress] = useState<LearnProgress>({
+    lessons: {},
+    xp: 0,
+    weeklyActivity: [],
+  });
 
-  // Load completion progress from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LEARN_PROGRESS_KEY);
-      if (raw) setCompletedIds(new Set(JSON.parse(raw) as string[]));
-    } catch {
-      /* ignore corrupt/unavailable storage */
-    }
+    setProgress(loadProgress());
   }, []);
 
-  function toggleModule(id: string) {
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else {
-        next.add(id);
-        track("learn_module_opened", { module_id: id });
-      }
-      return next;
-    });
-  }
+  const metrics = hydrated && inputs ? calcAllMetrics(inputs) : null;
+  const recommended =
+    metrics
+      ? getRecommendedLesson(metrics.healthScoreBreakdown, progress)
+      : getRecommendedLesson(
+          { savingsRatePoints: 0, emergencyFundPoints: 0, debtPoints: 0, investingPoints: 0 },
+          progress
+        );
 
-  function toggleComplete(id: string) {
-    setCompletedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else {
-        next.add(id);
-        track("learn_module_completed", { module_id: id });
-      }
-      try {
-        localStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(Array.from(next)));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }
-
-  const filtered =
-    activeFilter === "All"
-      ? LEARN_MODULES
-      : LEARN_MODULES.filter((m) => m.tag === activeFilter);
-
-  const completedCount = LEARN_MODULES.filter((m) => completedIds.has(m.id)).length;
-  const totalCount = LEARN_MODULES.length;
-  const progressPct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
+  const levelData = getLevelProgress(progress.xp);
+  const streak = getStreak(progress);
+  const totalLessons = LESSONS.length;
+  const completedCount = Object.keys(progress.lessons).length;
 
   return (
     <div className="min-h-screen bg-transparent">
       <AppNav />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Learn</h1>
+          <h1 className="text-2xl font-bold text-white mb-1">Freedomly Learn</h1>
           <p className="text-sm text-white/50">
-            The foundations behind every number on your dashboard.
+            Short lessons that explain every number on your dashboard — and what to do about it.
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl px-5 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-              Your progress
-            </span>
-            <span className="text-xs font-medium text-slate-600">
-              {completedCount} of {totalCount} completed
-            </span>
+        {/* Progress bar + level + streak */}
+        <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl px-5 py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap size={15} className="text-emerald-600" />
+              <span className="text-sm font-bold text-slate-800">{levelData.level.name}</span>
+              <span className="text-xs text-slate-500">{progress.xp} XP</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {streak > 0 && (
+                <div className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2.5 py-1">
+                  <Flame size={12} />
+                  {streak} week streak
+                </div>
+              )}
+              <span className="text-xs text-slate-500">
+                {completedCount}/{totalLessons} lessons
+              </span>
+            </div>
           </div>
           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
+              style={{ width: `${levelData.nextLevel ? levelData.pct : 100}%` }}
             />
           </div>
+          {levelData.nextLevel && (
+            <p className="text-xs text-slate-400">
+              {levelData.xpToNextLevel - levelData.xpIntoLevel} XP to <span className="font-medium text-slate-600">{levelData.nextLevel.name}</span>
+            </p>
+          )}
         </div>
 
-        {/* Filter bar */}
-        <div className="flex gap-2 flex-wrap" role="group" aria-label="Filter by topic">
-          {(["All", ...ALL_TAGS] as const).map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setActiveFilter(tag)}
-              className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-medium border transition-all duration-150",
-                activeFilter === tag
-                  ? "bg-white/20 text-white border-white/40 shadow-sm"
-                  : "bg-white/10 border-white/15 text-white/60 hover:text-white hover:border-white/30"
-              )}
+        {/* Recommended next lesson */}
+        {recommended && (
+          <section className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
+              Up next for you
+            </h2>
+            <Link
+              href={`/learn/${recommended.lesson.id}`}
+              onClick={() => track("lesson_opened", { lesson_id: recommended.lesson.id, track_id: recommended.lesson.trackId })}
+              className="block bg-white/80 backdrop-blur-sm border border-emerald-200 shadow-lg ring-1 ring-emerald-100 rounded-2xl p-5 hover:ring-2 transition-all group"
             >
-              {tag}
-              {tag !== "All" && (
-                <span className="ml-1.5 text-slate-500">
-                  {LEARN_MODULES.filter((m) => m.tag === tag).length}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Module cards */}
-        <div className="flex flex-col gap-3">
-          {filtered.map((module) => {
-            const isOpen = openIds.has(module.id);
-            const isCompleted = completedIds.has(module.id);
-            return (
-              <article
-                key={module.id}
-                className={cn(
-                  "bg-white/70 backdrop-blur-sm border shadow-sm rounded-2xl overflow-hidden transition-colors",
-                  isCompleted ? "border-emerald-300 ring-1 ring-emerald-200" : "border-white/60"
-                )}
-              >
-                {/* Card header — always visible */}
-                <div className="flex items-stretch">
-                  {/* Completion toggle (separate button — not nested in the expand button) */}
-                  <button
-                    onClick={() => toggleComplete(module.id)}
-                    className="pl-5 sm:pl-6 pr-1 flex items-center shrink-0 group/check"
-                    aria-pressed={isCompleted}
-                    aria-label={isCompleted ? "Mark as not completed" : "Mark as completed"}
-                    title={isCompleted ? "Completed — click to undo" : "Mark as completed"}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 size={22} className="text-emerald-500" />
-                    ) : (
-                      <Circle
-                        size={22}
-                        className="text-slate-300 group-hover/check:text-emerald-400 transition-colors"
-                      />
-                    )}
-                  </button>
-
-                  {/* Expand/collapse */}
-                  <button
-                    onClick={() => toggleModule(module.id)}
-                    className="flex-1 min-w-0 text-left pl-3 pr-5 py-4 sm:py-5 flex items-start justify-between gap-4 hover:bg-white/40 transition-colors"
-                    aria-expanded={isOpen}
-                  >
-                    <div className="flex flex-col gap-2 min-w-0">
-                      {/* Badges */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                            TAG_COLORS[module.tag]
-                          )}
-                        >
-                          {module.tag}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-slate-500">
-                          <Clock size={10} />
-                          {module.readTime} min
-                        </span>
-                        {isCompleted && (
-                          <span className="text-xs font-medium text-emerald-600">Completed</span>
-                        )}
-                      </div>
-                      {/* Title */}
-                      <h2 className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
-                        {module.title}
-                      </h2>
-                    </div>
-                    <ChevronDown
-                      size={16}
-                      className={cn(
-                        "text-slate-400 shrink-0 mt-1 transition-transform duration-300",
-                        isOpen && "rotate-180"
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* Expandable content */}
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-in-out",
-                    isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-                  )}
-                  aria-hidden={!isOpen}
-                >
-                  <div className="px-5 pb-5 sm:px-6 sm:pb-6 border-t border-slate-200">
-                    {/* Paragraphs */}
-                    <div className="flex flex-col gap-4 pt-5">
-                      {module.paragraphs.map((para, i) => (
-                        <p
-                          key={i}
-                          className="text-sm text-slate-500 leading-relaxed"
-                        >
-                          {para}
-                        </p>
-                      ))}
-                    </div>
-
-                    {/* Key takeaway */}
-                    <div className="mt-5 bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 flex gap-3">
-                      <Star
-                        size={14}
-                        className="text-emerald-600 shrink-0 mt-0.5"
-                        fill="currentColor"
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">
-                          Key takeaway
-                        </p>
-                        <p className="text-xs text-emerald-800 leading-relaxed">
-                          {module.keyTakeaway}
-                        </p>
-                      </div>
-                    </div>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                      {recommended.track.title} · Lesson {recommended.lesson.order}
+                    </span>
+                  </div>
+                  <p className="text-base font-bold text-slate-900 leading-snug">
+                    {recommended.lesson.title}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <BookOpen size={11} />
+                      ~2 min
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap size={11} />
+                      {recommended.lesson.xp}+ XP
+                    </span>
                   </div>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-600">No modules in this category yet.</p>
-          </div>
+                <div className="shrink-0 w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                  <ArrowRight size={20} className="text-emerald-600" />
+                </div>
+              </div>
+            </Link>
+          </section>
         )}
+
+        {/* Tracks */}
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
+            All tracks
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {TRACKS.map((track_) => {
+              const trackLessons = getLessonsByTrack(track_.id);
+              const completed = getTrackCompletionCount(track_.id, progress);
+              const allDone = completed === trackLessons.length;
+              const nextLesson = trackLessons.find((l) => !progress.lessons[l.id]);
+
+              return (
+                <div
+                  key={track_.id}
+                  className={cn(
+                    "bg-white/70 backdrop-blur-sm border shadow-sm rounded-2xl p-5 flex flex-col gap-4",
+                    allDone
+                      ? "border-emerald-300 ring-1 ring-emerald-200"
+                      : "border-white/60"
+                  )}
+                >
+                  {/* Track header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{track_.badge}</span>
+                        <span className="text-sm font-bold text-slate-900">{track_.title}</span>
+                        {allDone && (
+                          <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">{track_.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Lesson list */}
+                  <div className="flex flex-col gap-1.5">
+                    {trackLessons.map((lesson, i) => {
+                      const isDone = !!progress.lessons[lesson.id];
+                      const isUnlocked = i === 0 || !!progress.lessons[trackLessons[i - 1].id];
+                      const isNext = !isDone && isUnlocked;
+
+                      return (
+                        <div key={lesson.id}>
+                          {isUnlocked ? (
+                            <Link
+                              href={`/learn/${lesson.id}`}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-xl border text-xs transition-colors",
+                                isDone
+                                  ? "border-emerald-200 bg-emerald-50/60 text-slate-500"
+                                  : isNext
+                                  ? "border-emerald-300 bg-emerald-50 text-slate-700 font-medium hover:border-emerald-400"
+                                  : "border-slate-200 bg-white/60 text-slate-600 hover:border-slate-300"
+                              )}
+                            >
+                              {isDone ? (
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className={cn(
+                                  "w-3.5 h-3.5 rounded-full border-2 shrink-0",
+                                  isNext ? "border-emerald-400" : "border-slate-300"
+                                )} />
+                              )}
+                              <span className="flex-1 truncate">{lesson.title}</span>
+                              {isNext && <ArrowRight size={12} className="text-emerald-500 shrink-0" />}
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-100 bg-slate-50/50 text-xs text-slate-400 cursor-not-allowed">
+                              <Lock size={12} className="shrink-0" />
+                              <span className="flex-1 truncate">{lesson.title}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Track CTA */}
+                  {nextLesson && (
+                    <Link
+                      href={`/learn/${nextLesson.id}`}
+                      className="flex items-center justify-center gap-2 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs transition-colors"
+                    >
+                      {completed === 0 ? "Start track" : "Continue"}
+                      <ArrowRight size={14} />
+                    </Link>
+                  )}
+                  {allDone && (
+                    <div className="flex items-center justify-center gap-2 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                      {track_.badge} Track complete!
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </main>
     </div>
   );

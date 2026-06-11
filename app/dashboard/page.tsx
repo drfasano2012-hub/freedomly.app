@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { calcAllMetrics } from "@/lib/calculations";
+import { calcAllMetrics, calcPotentialScore } from "@/lib/calculations";
 import { track } from "@/lib/analytics";
 import { AppNav } from "@/components/AppNav";
 import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
@@ -16,6 +16,7 @@ import { ActionPlan } from "@/components/dashboard/ActionPlan";
 import { PlanDiagnostics } from "@/components/dashboard/PlanDiagnostics";
 import { ProgressSection } from "@/components/dashboard/ProgressSection";
 import { SharpenPlan } from "@/components/dashboard/SharpenPlan";
+import { ContinueLearningCard } from "@/components/learn/ContinueLearningCard";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -86,6 +87,10 @@ export default function DashboardPage() {
               <HealthScoreCard
                 score={metrics.healthScore}
                 breakdown={metrics.healthScoreBreakdown}
+                potentialScore={calcPotentialScore(
+                  metrics.healthScoreBreakdown,
+                  metrics.actionPlan.topActions
+                )}
               />
             </div>
             <div className="md:col-span-2">
@@ -100,6 +105,12 @@ export default function DashboardPage() {
 
         {/* Goals + risk deferred from the checkup — shows once, then gone */}
         <SharpenPlan inputs={inputs} setInputs={setInputs} />
+
+        {/* Keep learning */}
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Keep learning</SectionLabel>
+          <ContinueLearningCard breakdown={metrics.healthScoreBreakdown} />
+        </section>
 
         {/* Your progress — renders only once there's history/deltas/milestones */}
         <ProgressSection metrics={metrics} />

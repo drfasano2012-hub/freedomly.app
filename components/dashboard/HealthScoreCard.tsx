@@ -4,6 +4,7 @@ import type { HealthScoreBreakdown } from "@/lib/types";
 interface Props {
   score: number;
   breakdown: HealthScoreBreakdown;
+  potentialScore?: number;
 }
 
 function getScoreColor(score: number): string {
@@ -72,9 +73,10 @@ const BREAKDOWN_ITEMS = [
   { key: "investingPoints" as const, label: "Investing readiness" },
 ];
 
-export function HealthScoreCard({ score, breakdown }: Props) {
+export function HealthScoreCard({ score, breakdown, potentialScore }: Props) {
   const color = getScoreColor(score);
   const label = getScoreLabel(score);
+  const scoreDelta = potentialScore !== undefined ? potentialScore - score : 0;
 
   return (
     <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-6 flex flex-col gap-5">
@@ -107,6 +109,11 @@ export function HealthScoreCard({ score, breakdown }: Props) {
           <p className="text-xs text-slate-500 leading-relaxed">
             {getScoreDescription(score)}
           </p>
+          {scoreDelta >= 5 && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 w-fit mt-0.5">
+              ↑ {potentialScore} possible with open Next Moves
+            </span>
+          )}
         </div>
       </div>
 

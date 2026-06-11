@@ -99,6 +99,58 @@ export interface ActionItem {
   text: string;
   detail: string;
   impact?: string;
+  lessonId?: string; // links to a Lesson in content/lessons.ts
+}
+
+// ─── Learn system ─────────────────────────────────────────────────────────────
+
+export type TrackId = "savings-rate" | "emergency-fund" | "debt" | "investing";
+
+export interface LessonCard {
+  heading?: string;
+  body: string;
+}
+
+export interface QuickCheck {
+  question: string;
+  options: [string, string, string];
+  correctIndex: 0 | 1 | 2;
+  explanation: string;
+}
+
+export interface Lesson {
+  id: string;
+  trackId: TrackId;
+  order: number;
+  title: string;
+  cards: LessonCard[];
+  quickCheck: QuickCheck;
+  relatedActionId?: string;
+  xp: number;
+}
+
+export interface Track {
+  id: TrackId;
+  title: string;
+  description: string;
+  pillarKey: keyof HealthScoreBreakdown;
+  badge: string;
+}
+
+export interface LessonRecord {
+  completedAt: string;
+  quizCorrect: boolean;
+}
+
+export interface LearnProgress {
+  lessons: Record<string, LessonRecord>;
+  xp: number;
+  weeklyActivity: string[];
+}
+
+export interface Level {
+  name: string;
+  minXp: number;
 }
 
 export interface ActionPlanResult {
