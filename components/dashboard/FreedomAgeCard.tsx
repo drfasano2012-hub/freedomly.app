@@ -39,16 +39,16 @@ function calcAdjustedFreedomAge(
   monthlyInvestment: number,
   adjustedMonthlySpending: number,
   startingValue: number
-): { status: "no_surplus" | "over_50_years" | "already_reached" | "normal"; freedomAge: number | null; yearsToFreedom: number | null; fiNumber: number } {
+): FreedomAgeResult {
   const annualSpending = adjustedMonthlySpending * 12;
   const fiNumber = annualSpending * 25;
   const monthlyRate = 0.07 / 12;
 
   if (startingValue >= fiNumber) {
-    return { status: "already_reached", freedomAge: currentAge, yearsToFreedom: 0, fiNumber };
+    return { status: "already_reached", freedomAge: currentAge, yearsToFreedom: 0, fiNumber, monthsToFreedom: 0 };
   }
   if (monthlyInvestment <= 0) {
-    return { status: "no_surplus", freedomAge: null, yearsToFreedom: null, fiNumber };
+    return { status: "no_surplus", freedomAge: null, yearsToFreedom: null, fiNumber, monthsToFreedom: null };
   }
 
   let fv = startingValue;
@@ -58,7 +58,7 @@ function calcAdjustedFreedomAge(
     months++;
   }
   if (months >= 600) {
-    return { status: "over_50_years", freedomAge: null, yearsToFreedom: null, fiNumber };
+    return { status: "over_50_years", freedomAge: null, yearsToFreedom: null, fiNumber, monthsToFreedom: null };
   }
 
   const yearsToFreedom = months / 12;
@@ -67,6 +67,7 @@ function calcAdjustedFreedomAge(
     freedomAge: Math.round(currentAge + yearsToFreedom),
     yearsToFreedom: Math.round(yearsToFreedom * 10) / 10,
     fiNumber,
+    monthsToFreedom: months,
   };
 }
 
@@ -78,8 +79,6 @@ export function FreedomAgeCard({
   monthlyTakeHome,
   totalInvestedPlusCash,
 }: Props) {
-  const badge = getStatusBadge(result);
-
   // Freedom simulator — two levers: target monthly spending + monthly investing.
   const targetFloor = Math.max(0, Math.round((monthlySpending * 0.4) / 50) * 50);
   const targetCeil = Math.max(monthlySpending + 500, Math.round((monthlySpending * 1.25) / 50) * 50);
@@ -93,7 +92,7 @@ export function FreedomAgeCard({
 
   function trackOnce() {
     if (!sliderTracked.current) {
-      sliderTracked.current = true; // fire once per mount, not per tick
+      sliderTracked.current = true;
       track("freedom_age_slider_used");
     }
   }
@@ -107,6 +106,10 @@ export function FreedomAgeCard({
     setInvesting(c);
     if (c !== investDefault) trackOnce();
   }
+  function resetSim() {
+    setTargetSpending(monthlySpending);
+    setInvesting(investDefault);
+  }
 
   const adjustedSpending = Math.max(0, targetSpending);
   const adjusted = useMemo(
@@ -117,8 +120,22 @@ export function FreedomAgeCard({
   const isAdjusted = targetSpending !== monthlySpending || investing !== investDefault;
   const overCashflow = targetSpending + investing > monthlyTakeHome;
 
+  // When sliders are moved, the whole card reflects the simulation
+  const active = isAdjusted ? adjusted : result;
+  const badge = getStatusBadge(active);
+
+  // Delta vs. baseline (only meaningful when both are "normal")
+  const delta =
+    isAdjusted &&
+    result.status === "normal" &&
+    result.freedomAge !== null &&
+    adjusted.status === "normal" &&
+    adjusted.freedomAge !== null
+      ? result.freedomAge - adjusted.freedomAge
+      : null;
+
   const renderMain = () => {
-    if (result.status === "already_reached") {
+    if (active.status === "already_reached") {
       return (
         <div className="flex flex-col gap-2">
           <div className="text-6xl sm:text-7xl font-bold text-emerald-600 leading-none">
@@ -131,87 +148,59 @@ export function FreedomAgeCard({
       );
     }
 
-    if (result.status === "no_surplus") {
+    if (active.status === "no_surplus") {
       return (
         <div className="flex flex-col gap-2">
           <div className="text-2xl font-semibold text-slate-500 leading-snug">
             No surplus yet
           </div>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Right now your spending meets or exceeds your income, leaving nothing to invest. The first step is creating any positive monthly surplus — even $200/month starts the clock. Reducing spending by $200 has the same effect as a $200 raise.
+            {isAdjusted
+              ? "At this spending and investing level there's nothing left to compound. Try lowering spending or raising the investing slider."
+              : "Right now your spending meets or exceeds your income, leaving nothing to invest. The first step is creating any positive monthly surplus — even $200/month starts the clock. Reducing spending by $200 has the same effect as a $200 raise."}
           </p>
         </div>
       );
     }
 
-    if (result.status === "over_50_years") {
+    if (active.status === "over_50_years") {
       return (
         <div className="flex flex-col gap-2">
           <div className="text-2xl font-semibold text-slate-500 leading-snug">
             50+ years out
           </div>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Your FI number is {formatCurrencyFull(result.fiNumber)}. Your current surplus is too small to close this gap in a reasonable timeline. Three levers accelerate it: grow your income, reduce monthly spending, or both. Adding $300/month to your surplus can cut a decade off this projection.
+            Your FI number is {formatCurrencyFull(active.fiNumber)}. Your current surplus is too small to close this gap in a reasonable timeline. Three levers accelerate it: grow your income, reduce monthly spending, or both. Adding $300/month to your surplus can cut a decade off this projection.
           </p>
         </div>
       );
     }
 
     // normal
+    const activeSurplus = isAdjusted ? investing : monthlySurplus;
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-end gap-2">
-          <span className="text-6xl sm:text-7xl font-bold text-slate-800 leading-none">
-            {result.freedomAge}
+        <div className="flex items-end gap-3 flex-wrap">
+          <span className="text-6xl sm:text-7xl font-bold text-slate-800 leading-none" style={{ transition: "color 0.2s" }}>
+            {active.freedomAge}
           </span>
           <span className="text-base text-slate-500 mb-2">years old</span>
+          {delta !== null && delta > 0 && (
+            <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full mb-1.5">
+              {delta} year{delta !== 1 ? "s" : ""} earlier 🎉
+            </span>
+          )}
+          {delta !== null && delta < 0 && (
+            <span className="text-sm font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full mb-1.5">
+              {Math.abs(delta)} year{Math.abs(delta) !== 1 ? "s" : ""} later
+            </span>
+          )}
         </div>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Your FI number is {formatCurrencyFull(result.fiNumber)} — 25× your annual spending. Your{" "}
-          <span className="font-semibold text-emerald-700">{formatCurrencyFull(monthlySurplus)}/month</span>{" "}
-          surplus invested at 7% annually gets you there in {result.yearsToFreedom} years. Every extra $100/month you free up pulls this date closer.
+          Your FI number is {formatCurrencyFull(active.fiNumber)} — 25× your annual spending. Your{" "}
+          <span className="font-semibold text-emerald-700">{formatCurrencyFull(activeSurplus)}/month</span>{" "}
+          invested at 7% annually gets you there in {active.yearsToFreedom} years. Every extra $100/month you free up pulls this date closer.
         </p>
-      </div>
-    );
-  };
-
-  const renderAdjustedResult = () => {
-    if (adjusted.status === "already_reached") {
-      return (
-        <p className="text-sm font-semibold text-emerald-600">
-          You&rsquo;d already be at your FI number — freedom now!
-        </p>
-      );
-    }
-    if (adjusted.status === "no_surplus") {
-      return <p className="text-sm text-red-500">Set a monthly investment above $0 to start the clock.</p>;
-    }
-    if (adjusted.status === "over_50_years") {
-      return <p className="text-sm text-slate-500">Still 50+ years out at this level.</p>;
-    }
-    const delta =
-      result.status === "normal" && result.freedomAge !== null && adjusted.freedomAge !== null
-        ? result.freedomAge - adjusted.freedomAge
-        : null;
-    return (
-      <div className="flex items-center gap-2.5 flex-wrap">
-        <div>
-          <span className="text-2xl font-bold text-blue-600">{adjusted.freedomAge}</span>
-          <span className="text-sm text-slate-500 ml-1.5">years old</span>
-        </div>
-        {delta !== null && delta > 0 && (
-          <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-            {delta} year{delta !== 1 ? "s" : ""} earlier 🎉
-          </span>
-        )}
-        {delta !== null && delta < 0 && (
-          <span className="text-sm font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-            {Math.abs(delta)} year{Math.abs(delta) !== 1 ? "s" : ""} later
-          </span>
-        )}
-        {delta !== null && delta === 0 && (
-          <span className="text-xs text-slate-500">Your current plan</span>
-        )}
       </div>
     );
   };
@@ -225,8 +214,22 @@ export function FreedomAgeCard({
             Freedom Age Projection
           </p>
           <p className="text-xs text-slate-400 mt-0.5">
-            Based on your current monthly spending of{" "}
-            <span className="font-medium text-slate-500">{formatCurrencyFull(monthlySpending)}/mo</span>
+            {isAdjusted ? (
+              <>
+                Simulating —{" "}
+                <button
+                  onClick={resetSim}
+                  className="text-blue-500 hover:text-blue-600 font-medium underline underline-offset-2"
+                >
+                  reset to current
+                </button>
+              </>
+            ) : (
+              <>
+                Based on your current monthly spending of{" "}
+                <span className="font-medium text-slate-500">{formatCurrencyFull(monthlySpending)}/mo</span>
+              </>
+            )}
           </p>
         </div>
         <span
@@ -241,7 +244,7 @@ export function FreedomAgeCard({
       <div>{renderMain()}</div>
 
       {/* What is financial freedom? */}
-      {result.status !== "already_reached" && (
+      {active.status !== "already_reached" && (
         <div className="bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3">
           <p className="text-xs font-semibold text-slate-600 mb-1">What is financial freedom?</p>
           <p className="text-xs text-slate-500 leading-relaxed">
@@ -283,14 +286,6 @@ export function FreedomAgeCard({
               Heads up — spending + investing is more than your {formatCurrencyFull(monthlyTakeHome)}/mo take-home.
             </p>
           )}
-
-          {/* Live result */}
-          <div className="border-t border-blue-200/60 pt-3">
-            <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-              {isAdjusted ? "At this plan you'd be free at" : "Free at"}
-            </p>
-            {renderAdjustedResult()}
-          </div>
         </div>
       )}
 
@@ -299,14 +294,14 @@ export function FreedomAgeCard({
         <div>
           <p className="text-xs text-slate-600 mb-0.5">FI number</p>
           <p className="text-base font-semibold text-slate-700">
-            {formatCurrencyFull(result.fiNumber)}
+            {formatCurrencyFull(active.fiNumber)}
           </p>
         </div>
-        {result.status === "normal" && result.yearsToFreedom !== null && (
+        {active.status === "normal" && active.yearsToFreedom !== null && (
           <div>
             <p className="text-xs text-slate-600 mb-0.5">Years to freedom</p>
             <p className="text-base font-semibold text-slate-700">
-              {result.yearsToFreedom} yrs
+              {active.yearsToFreedom} yrs
             </p>
           </div>
         )}
