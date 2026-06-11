@@ -13,7 +13,9 @@ import { SnapshotCards } from "@/components/dashboard/SnapshotCards";
 import { BenchmarksSection } from "@/components/dashboard/BenchmarksSection";
 import { DetailCards } from "@/components/dashboard/DetailCards";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
+import { PlanDiagnostics } from "@/components/dashboard/PlanDiagnostics";
 import { ProgressSection } from "@/components/dashboard/ProgressSection";
+import { SharpenPlan } from "@/components/dashboard/SharpenPlan";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -25,7 +27,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { inputs, hasCompletedCheckup, hydrated } = useFinancialData();
+  const { inputs, setInputs, hasCompletedCheckup, hydrated } = useFinancialData();
 
   useEffect(() => {
     if (hydrated && !hasCompletedCheckup) {
@@ -96,6 +98,9 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        {/* Goals + risk deferred from the checkup — shows once, then gone */}
+        <SharpenPlan inputs={inputs} setInputs={setInputs} />
+
         {/* Your progress — renders only once there's history/deltas/milestones */}
         <ProgressSection metrics={metrics} />
 
@@ -129,6 +134,7 @@ export default function DashboardPage() {
             <ChevronDown size={14} className="transition-transform group-open:rotate-180" />
           </summary>
           <div className="mt-4 flex flex-col gap-4">
+            <PlanDiagnostics actionPlan={metrics.actionPlan} />
             <DetailCards metrics={metrics} inputs={inputs} />
             <BenchmarksSection metrics={metrics} currentAge={inputs.currentAge} />
           </div>

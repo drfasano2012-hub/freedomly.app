@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { TrendingUp, ArrowRight, Check } from "lucide-react";
+import { TrendingUp, ArrowRight } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { track } from "@/lib/analytics";
+import { GOALS } from "@/lib/profile-options";
 import type {
   RiskTolerance,
   EmploymentType,
-  GoalHorizon,
   UserInputs,
   Debt,
   Goal,
@@ -16,28 +16,11 @@ import type {
 
 // ─── Config (reused from the original wizard) ──────────────────────────────────
 
-const GOALS: { id: string; label: string; horizon: GoalHorizon }[] = [
-  { id: "emergency_fund", label: "Build emergency fund", horizon: "short" },
-  { id: "pay_debt", label: "Pay off debt", horizon: "short" },
-  { id: "vacation", label: "Save for vacation / travel", horizon: "short" },
-  { id: "buy_home", label: "Buy a home", horizon: "mid" },
-  { id: "start_business", label: "Start a business", horizon: "mid" },
-  { id: "education", label: "Kids' education fund", horizon: "mid" },
-  { id: "retire", label: "Retire comfortably", horizon: "long" },
-  { id: "fi", label: "Achieve financial independence", horizon: "long" },
-];
-
 const EMPLOYMENT_OPTIONS: { value: EmploymentType; label: string; icon: string }[] = [
   { value: "w2", label: "Employee (W-2)", icon: "💼" },
   { value: "self_employed", label: "Self-employed", icon: "🧑‍💻" },
   { value: "business_owner", label: "Business owner", icon: "🏢" },
   { value: "not_employed", label: "Not working now", icon: "🌿" },
-];
-
-const RISK_OPTIONS: { value: RiskTolerance; label: string; icon: string }[] = [
-  { value: "conservative", label: "Conservative", icon: "🛡️" },
-  { value: "moderate", label: "Moderate", icon: "⚖️" },
-  { value: "aggressive", label: "Aggressive", icon: "🚀" },
 ];
 
 interface FormData {
@@ -84,38 +67,30 @@ function sampleToForm(s: UserInputs): FormData {
 // ─── Conversation script ───────────────────────────────────────────────────────
 
 type StepId =
-  | "intro" | "age" | "employment" | "takeHome" | "annualIncome" | "spending"
-  | "cash" | "retirement" | "brokerage" | "hsa" | "debtsAsk"
+  | "intro" | "age" | "employment" | "takeHome" | "spending"
+  | "money" | "debtsAsk"
   | "debtName" | "debtBalance" | "debtRate" | "debtMore"
-  | "goals" | "risk" | "done";
+  | "done";
 
 const PROMPT: Record<StepId, string> = {
-  intro: "Hey 👋 I'm Freedomly. I'll ask a few quick questions, then map your path to financial independence. Takes about 2 minutes — and your answers never leave your browser.",
+  intro: "Hey 👋 I'm Freedomly. I'll ask a few quick questions, then map your path to financial independence. Takes about a minute — and your answers never leave your browser.",
   age: "First up — how old are you?",
   employment: "Got it. What best describes your work?",
   takeHome: "Roughly how much do you take home each month, after taxes?",
-  annualIncome: "And your annual gross income, before taxes? This sharpens your benchmarks — feel free to skip.",
   spending: "About how much do you spend in a typical month?",
-  cash: "How much do you keep in cash — checking + savings combined?",
-  retirement: "Nice. What's in your retirement accounts — 401(k), IRA, Roth, all together?",
-  brokerage: "Any taxable investments? (Fidelity, Schwab, Robinhood, and the like.)",
-  hsa: "And an HSA balance, if you have one?",
+  money: "Last big one — roughly what do you have saved and invested? Ballpark is fine, and skip anything that doesn't apply.",
   debtsAsk: "Do you have any debts — credit cards, loans, anything like that?",
   debtName: "What's the debt? (e.g. Credit card, Student loan)",
   debtBalance: "How much is left on it?",
   debtRate: "What's the interest rate (APR)?",
   debtMore: "Got it. Any other debts?",
-  goals: "What are you working toward? Tap all that fit.",
-  risk: "Last one — how do you feel about investment risk?",
   done: "Perfect — building your dashboard… ✨",
 };
 
-// linear "send/choice" transitions (debts + goals handled specially)
+// linear "send/choice" transitions (money + debts handled specially)
 const NEXT: Partial<Record<StepId, StepId>> = {
-  age: "employment", employment: "takeHome", takeHome: "annualIncome",
-  annualIncome: "spending", spending: "cash", cash: "retirement",
-  retirement: "brokerage", brokerage: "hsa", hsa: "debtsAsk",
-  goals: "risk", risk: "done",
+  age: "employment", employment: "takeHome", takeHome: "spending",
+  spending: "money",
 };
 
 type AmountField =
@@ -123,16 +98,20 @@ type AmountField =
   | "cashSavings" | "retirementAccounts" | "brokerageAccounts" | "hsaAccounts";
 
 const FIELD_OF: Partial<Record<StepId, AmountField>> = {
-  age: "currentAge", takeHome: "monthlyTakeHome", annualIncome: "annualIncome",
-  spending: "monthlySpending", cash: "cashSavings", retirement: "retirementAccounts",
-  brokerage: "brokerageAccounts", hsa: "hsaAccounts",
+  age: "currentAge", takeHome: "monthlyTakeHome", spending: "monthlySpending",
 };
 
 const REQUIRED = new Set<StepId>(["age", "takeHome", "spending"]);
-const SKIPPABLE = new Set<StepId>(["annualIncome", "cash", "retirement", "brokerage", "hsa"]);
 const PROGRESS_ORDER: StepId[] = [
-  "age", "employment", "takeHome", "annualIncome", "spending", "cash",
-  "retirement", "brokerage", "hsa", "debtsAsk", "goals", "risk",
+  "age", "employment", "takeHome", "spending", "money", "debtsAsk",
+];
+
+// the one grouped step: four balances in a single card
+const MONEY_FIELDS: { key: AmountField; label: string; hint: string }[] = [
+  { key: "cashSavings", label: "Cash", hint: "checking + savings" },
+  { key: "retirementAccounts", label: "Retirement", hint: "401(k), IRA, Roth" },
+  { key: "brokerageAccounts", label: "Brokerage", hint: "taxable investing" },
+  { key: "hsaAccounts", label: "HSA", hint: "if you have one" },
 ];
 
 type Msg = { id: number; role: "bot" | "user"; text: string };
@@ -149,6 +128,7 @@ export default function CheckupPage() {
   const [inputVal, setInputVal] = useState("");
   const [error, setError] = useState("");
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [moneyDraft, setMoneyDraft] = useState<Partial<Record<AmountField, string>>>({});
 
   const formRef = useRef(form);
   formRef.current = form;
@@ -172,6 +152,13 @@ export default function CheckupPage() {
       setCurrent(id);
       const field = FIELD_OF[id];
       setInputVal(field ? formRef.current[field] || "" : "");
+      if (id === "money") {
+        const f = formRef.current;
+        setMoneyDraft({
+          cashSavings: f.cashSavings, retirementAccounts: f.retirementAccounts,
+          brokerageAccounts: f.brokerageAccounts, hsaAccounts: f.hsaAccounts,
+        });
+      }
     }, 450);
   }, []);
 
@@ -265,23 +252,20 @@ export default function CheckupPage() {
     advance(current);
   }
 
-  function skip() {
-    const field = FIELD_OF[current];
-    if (field) setForm((f) => ({ ...f, [field]: "" }));
-    pushUser("Skip");
-    advance(current);
-  }
-
   function chooseEmployment(o: (typeof EMPLOYMENT_OPTIONS)[number]) {
     setForm((f) => ({ ...f, employmentType: o.value }));
     pushUser(`${o.icon} ${o.label}`);
     advance("employment");
   }
 
-  function chooseRisk(o: (typeof RISK_OPTIONS)[number]) {
-    setForm((f) => ({ ...f, riskTolerance: o.value }));
-    pushUser(`${o.icon} ${o.label}`);
-    advance("risk");
+  function submitMoney(draft: Partial<Record<AmountField, string>> = moneyDraft) {
+    const parts = MONEY_FIELDS
+      .filter((mf) => parseNum(draft[mf.key] ?? "") > 0)
+      .map((mf) => `${mf.label} ${fmtUSD(parseNum(draft[mf.key] ?? ""))}`);
+    setForm((f) => ({ ...f, ...draft }));
+    pushUser(parts.length ? parts.join(" · ") : "Starting from $0");
+    track("checkup_step_completed", { step: "money" });
+    ask("debtsAsk");
   }
 
   function answerDebtsAsk(hasDebt: boolean) {
@@ -293,7 +277,7 @@ export default function CheckupPage() {
     } else {
       pushUser("No debts");
       track("checkup_step_completed", { step: "debtsAsk" });
-      ask("goals");
+      ask("done");
     }
   }
 
@@ -323,23 +307,8 @@ export default function CheckupPage() {
       ask("debtName");
     } else {
       pushUser("That's all");
-      ask("goals");
+      ask("done");
     }
-  }
-
-  function toggleGoal(id: string) {
-    setForm((f) => ({
-      ...f,
-      selectedGoalIds: f.selectedGoalIds.includes(id)
-        ? f.selectedGoalIds.filter((g) => g !== id)
-        : [...f.selectedGoalIds, id],
-    }));
-  }
-
-  function submitGoals() {
-    const labels = GOALS.filter((g) => form.selectedGoalIds.includes(g.id)).map((g) => g.label);
-    pushUser(labels.length ? labels.join(", ") : "Just exploring for now");
-    advance("goals");
   }
 
   // ── Progress
@@ -348,7 +317,7 @@ export default function CheckupPage() {
 
   // ── Composer for the active step
   const numericSteps: StepId[] = ["age", "debtRate"];
-  const currencySteps: StepId[] = ["takeHome", "annualIncome", "spending", "cash", "retirement", "brokerage", "hsa", "debtBalance"];
+  const currencySteps: StepId[] = ["takeHome", "spending", "debtBalance"];
   const isText = current === "debtName";
   const isAmount = numericSteps.includes(current) || currencySteps.includes(current);
   const showComposerInput = isAmount || isText;
@@ -436,11 +405,42 @@ export default function CheckupPage() {
             </div>
           )}
 
-          {!typing && current === "risk" && (
-            <div className="grid grid-cols-3 gap-2">
-              {RISK_OPTIONS.map((o) => (
-                <Chip key={o.value} onClick={() => chooseRisk(o)}>{o.icon} {o.label}</Chip>
-              ))}
+          {!typing && current === "money" && (
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                {MONEY_FIELDS.map((mf) => (
+                  <label key={mf.key} className="flex flex-col gap-1">
+                    <span className="text-[11px] text-white/55 font-medium">
+                      {mf.label} <span className="text-white/30">· {mf.hint}</span>
+                    </span>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-slate-400 text-sm pointer-events-none">$</span>
+                      <input
+                        inputMode="decimal"
+                        value={moneyDraft[mf.key] ?? ""}
+                        onChange={(e) => setMoneyDraft((d) => ({ ...d, [mf.key]: e.target.value }))}
+                        placeholder="0"
+                        className="w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-sm py-2.5 pl-7 pr-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                      />
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => submitMoney({})}
+                  className="text-sm text-white/50 hover:text-white/80 px-2"
+                >
+                  Skip all
+                </button>
+                <button
+                  onClick={() => submitMoney()}
+                  className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl px-5 py-2.5"
+                >
+                  Continue <ArrowRight size={15} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -455,33 +455,6 @@ export default function CheckupPage() {
             <div className="flex gap-2">
               <Chip onClick={() => answerDebtMore(true)}>Add another</Chip>
               <Chip primary onClick={() => answerDebtMore(false)}>That&rsquo;s all</Chip>
-            </div>
-          )}
-
-          {!typing && current === "goals" && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap gap-2">
-                {GOALS.map((g) => {
-                  const on = form.selectedGoalIds.includes(g.id);
-                  return (
-                    <button
-                      key={g.id}
-                      onClick={() => toggleGoal(g.id)}
-                      className={`text-xs font-medium rounded-full px-3 py-2 border transition-colors flex items-center gap-1.5 ${
-                        on ? "bg-emerald-500 border-emerald-400 text-white" : "bg-white/10 border-white/20 text-white/80 hover:border-white/40"
-                      }`}
-                    >
-                      {on && <Check size={12} />} {g.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                onClick={submitGoals}
-                className="self-end inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl px-5 py-2.5"
-              >
-                Continue <ArrowRight size={15} />
-              </button>
             </div>
           )}
 
@@ -514,11 +487,6 @@ export default function CheckupPage() {
                   <span className="absolute right-3.5 text-slate-400 text-sm pointer-events-none">%</span>
                 )}
               </div>
-              {SKIPPABLE.has(current) && (
-                <button type="button" onClick={skip} className="text-sm text-white/50 hover:text-white/80 px-2">
-                  Skip
-                </button>
-              )}
               <button
                 type="submit"
                 className="shrink-0 inline-flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl w-11 h-11"

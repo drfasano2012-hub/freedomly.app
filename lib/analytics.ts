@@ -29,6 +29,7 @@ export type AnalyticsEvent =
   | "action_step_expanded"
   | "action_completed"
   | "milestone_reached"
+  | "plan_sharpened"
   | "checkup_edited"
   | "home_simulator_used";
 

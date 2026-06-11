@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TrendingUp, MapPin, Compass, Target, Sparkles } from "lucide-react";
+import { TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MobileStickyCTA } from "@/components/MobileStickyCTA";
 import { HomeSimulator } from "@/components/HomeSimulator";
@@ -99,129 +99,19 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* ───────────── 2. PROBLEM ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
-        <SectionHeading
-          kicker="The problem"
-          title={<>You&rsquo;re doing fine. But are you doing <span className="text-emerald-400">well?</span></>}
-          subtitle="You earn well, you save, you invest — and you still can't shake the question. The anxiety isn't your spending. It's not knowing."
-        />
-        <div className="mt-10 max-w-3xl mx-auto flex flex-wrap justify-center gap-3">
-          {[
-            "Am I doing enough?",
-            "Am I behind?",
-            "When could I actually be free?",
-            "What's the smartest next move?",
-            "Am I wasting money somewhere?",
-            "Could I work less someday?",
-          ].map((q) => (
-            <span
-              key={q}
-              className="bg-white/5 border border-white/15 rounded-full px-4 py-2 text-sm text-white/70"
-            >
-              &ldquo;{q}&rdquo;
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* ───────────── 3. WHY CURRENT TOOLS FAIL ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
-        <SectionHeading
-          kicker="Why current tools fail"
-          title="More financial data won't fix this"
-          subtitle="The tools you've tried answer the wrong question."
-        />
-        <div className="mt-12 max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              tool: "Budgeting apps",
-              answers: "What you already spent",
-              gap: "Backward-looking. The past, not the path.",
-            },
-            {
-              tool: "Net-worth trackers",
-              answers: "A number on a dashboard",
-              gap: "A figure — not whether it's enough, or what to do.",
-            },
-            {
-              tool: "Advisors & robo-advisors",
-              answers: "Money you hand over",
-              gap: "They manage assets. They don't make you fluent.",
-            },
-          ].map(({ tool, answers, gap }) => (
-            <div
-              key={tool}
-              className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-2"
-            >
-              <h3 className="text-base font-semibold text-white">{tool}</h3>
-              <p className="text-xs uppercase tracking-wider text-white/40">Answers</p>
-              <p className="text-sm text-white/70">{answers}</p>
-              <p className="text-sm text-white/45 mt-2 leading-relaxed">{gap}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-8 text-center text-sm text-white/50 max-w-xl mx-auto">
-          The gap none of them close:{" "}
-          <span className="text-white font-medium">
-            where you&rsquo;re headed
-          </span>{" "}
-          and{" "}
-          <span className="text-white font-medium">what to do next.</span>
-        </p>
-      </section>
-
-      {/* ───────────── 4. THE FREEDOMLY DIFFERENCE ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
+      {/* ───────────── 2. THREE QUESTIONS — Q1: WHERE AM I? ───────────── */}
+      <section className="px-6 pt-14 sm:pt-20 pb-2 border-t border-white/10">
         <SectionHeading
           kicker="The Freedomly difference"
           title="Three questions. One clear answer."
-          subtitle="Freedomly is built around the questions that actually matter. Most tools answer the first. Freedomly answers all three."
+          subtitle="Where am I? Where am I going? What's my next move? Most tools answer the first. Freedomly answers all three."
         />
-        <div className="mt-12 max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: MapPin,
-              n: "01",
-              q: "Where am I?",
-              d: "Your true financial position — health score, net worth, savings rate — benchmarked against people like you.",
-            },
-            {
-              icon: Compass,
-              n: "02",
-              q: "Where am I going?",
-              d: "Your trajectory to financial independence, projected from your real numbers. See the year you could be free.",
-            },
-            {
-              icon: Target,
-              n: "03",
-              q: "What's my next move?",
-              d: "The highest-impact action for your situation, ranked — with the effect of each on your freedom date.",
-            },
-          ].map(({ icon: Icon, n, q, d }) => (
-            <div
-              key={q}
-              className="bg-white/[0.06] border border-white/12 rounded-2xl p-6 flex flex-col gap-3"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
-                  <Icon size={18} className="text-emerald-400" />
-                </div>
-                <span className="text-sm font-bold text-white/25">{n}</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white">{q}</h3>
-              <p className="text-sm text-white/55 leading-relaxed">{d}</p>
-            </div>
-          ))}
-        </div>
       </section>
-
-      {/* ───────────── 5. SNAPSHOT EXAMPLE ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
+      <section className="px-6 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <SectionHeading
             center={false}
-            kicker="Where am I?"
+            kicker="01 — Where am I?"
             title="Where you stand — in one glance"
             subtitle="Your real position, benchmarked against people your age and income. No spreadsheets, no manual math."
           />
@@ -295,8 +185,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ───────────── 6. TRAJECTORY & FI ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
+      {/* ───────────── 3. Q2: WHERE AM I GOING? ───────────── */}
+      <section className="px-6 py-14 sm:py-20 bg-white/[0.03]">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* visual first on lg */}
           <div className="order-2 lg:order-1 bg-white/80 backdrop-blur-sm border border-white/60 shadow-2xl rounded-3xl p-6">
@@ -350,21 +240,21 @@ export default function LandingPage() {
           </div>
           <SectionHeading
             center={false}
-            kicker="Where am I going?"
+            kicker="02 — Where am I going?"
             title={<>See the year you could be <span className="text-emerald-400">free</span></>}
-            subtitle="Freedomly projects your freedom age from your real numbers — then lets you test 'what if I saved $300 more?' and watch the date move. Freedom isn't a bigger number — it's options: work you choose, time with people who matter, room to take a risk."
+            subtitle="Your freedom age, projected from your real numbers — then test 'what if I saved $300 more?' and watch the date move."
           />
         </div>
       </section>
 
-      {/* ───────────── 7. DECISION ENGINE ───────────── */}
-      <section className="px-6 py-14 sm:py-20 border-t border-white/10 bg-white/[0.03]">
+      {/* ───────────── 4. Q3: WHAT'S MY NEXT MOVE? ───────────── */}
+      <section className="px-6 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <SectionHeading
             center={false}
-            kicker="What's my next move?"
+            kicker="03 — What's my next move?"
             title="Your highest-impact move, ranked"
-            subtitle="Not generic advice — a prioritized plan built from your numbers. Freedomly weighs your situation and surfaces the moves that change your trajectory most."
+            subtitle="Not generic advice — a prioritized plan built from your numbers, with the effect of each move on your freedom date."
           />
           <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-xl rounded-3xl p-6 flex flex-col gap-3">
             {[
@@ -386,7 +276,71 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ───────────── 8. HOW IT WORKS ───────────── */}
+      {/* ───────────── 5. THE RETURN VISIT ───────────── */}
+      <section className="px-6 py-14 sm:py-20 border-t border-white/10">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          {/* visual first on lg */}
+          <div className="order-2 lg:order-1 bg-white/80 backdrop-blur-sm border border-white/60 shadow-2xl rounded-3xl p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                Month 3 — since your last visit
+              </p>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+                2 moves done
+              </span>
+            </div>
+
+            {/* deltas */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Health score", val: "62 → 71", sub: "+9 pts" },
+                { label: "Freedom age", val: "56 → 54", sub: "2 yrs sooner" },
+                { label: "Net worth", val: "+$6,400", sub: "3 months" },
+              ].map((d) => (
+                <div key={d.label} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] text-slate-500 leading-tight">{d.label}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5 leading-tight">{d.val}</p>
+                  <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{d.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* rising months */}
+            <div className="flex items-end gap-2 h-16 px-1">
+              {[34, 42, 47, 55, 62, 74].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div
+                    className={`w-full rounded-t-md ${i === 5 ? "bg-emerald-500" : "bg-emerald-200"}`}
+                    style={{ height: `${h}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* fresh next move */}
+            <div className="flex items-start gap-3 bg-emerald-50/70 border border-emerald-200 rounded-xl px-4 py-3">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-[10px] font-bold">→</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider">Your new next move</p>
+                <p className="text-sm font-semibold text-slate-900 leading-snug mt-0.5">
+                  Debt cleared — now redirect that $400/mo into investing
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <SectionHeading
+            center={false}
+            kicker="It grows with you"
+            title={<>Come back and watch the date <span className="text-emerald-400">move</span></>}
+            subtitle="A checkup tells you where you are. The compounding happens when you return: update your numbers, see your score climb and your freedom date pull closer, check off a move, and get the next one. Freedomly remembers your progress — and celebrates the milestones with you."
+          />
+        </div>
+      </section>
+
+      {/* ───────────── 6. HOW IT WORKS ───────────── */}
       <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <SectionHeading kicker="How it works" title="Five minutes to clarity" />
         <div className="mt-12 max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
