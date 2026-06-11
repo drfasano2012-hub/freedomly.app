@@ -166,7 +166,7 @@ export default function CheckupPage() {
   const startIntro = useCallback(() => {
     const lines = [
       "Hey 👋 I'm Freedomly — I turn your finances into clear direction, so you can stress less and build a real path to financial independence.",
-      "In about 2 minutes I'll show you three things: where you stand today, where you're headed, and the single best move to get there faster.",
+      "In about a minute I'll show you three things: where you stand today, where you're headed, and the single best move to get there faster.",
       "Your answers never leave your browser. Ready to find your number?",
     ];
     const step = (i: number) => {
