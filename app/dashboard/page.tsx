@@ -113,11 +113,11 @@ export default function DashboardPage() {
           <ContinueLearningCard breakdown={metrics.healthScoreBreakdown} />
         </section>
 
-        {/* Your progress — renders only once there's history/deltas/milestones */}
-        <ProgressSection metrics={metrics} />
-
         {/* Milestone map */}
         <MilestonesSection metrics={metrics} />
+
+        {/* Your progress — renders only once there's history/deltas/milestones */}
+        <ProgressSection metrics={metrics} />
 
         {/* Where you're headed */}
         <section className="flex flex-col gap-2">
