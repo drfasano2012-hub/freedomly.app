@@ -116,9 +116,6 @@ export default function DashboardPage() {
         {/* Milestone map */}
         <MilestonesSection metrics={metrics} />
 
-        {/* Your progress — renders only once there's history/deltas/milestones */}
-        <ProgressSection metrics={metrics} />
-
         {/* Where you're headed */}
         <section className="flex flex-col gap-2">
           <SectionLabel>Where you&rsquo;re headed</SectionLabel>
@@ -141,6 +138,9 @@ export default function DashboardPage() {
             employmentType={inputs.employmentType ?? "w2"}
           />
         </section>
+
+        {/* Your progress — compact pills at end */}
+        <ProgressSection metrics={metrics} />
 
         {/* The details — collapsible */}
         <details className="group">
