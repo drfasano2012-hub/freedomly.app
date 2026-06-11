@@ -420,7 +420,7 @@ export default function CheckupPage() {
                         value={moneyDraft[mf.key] ?? ""}
                         onChange={(e) => setMoneyDraft((d) => ({ ...d, [mf.key]: e.target.value }))}
                         placeholder="0"
-                        className="w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-sm py-2.5 pl-7 pr-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                        className="w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-base md:text-sm py-2.5 pl-7 pr-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                       />
                     </div>
                   </label>
@@ -479,7 +479,7 @@ export default function CheckupPage() {
                     current === "debtRate" ? "22" :
                     "0"
                   }
-                  className={`w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-sm py-3 ${
+                  className={`w-full bg-white/90 rounded-xl text-slate-800 placeholder:text-slate-400 text-base md:text-sm py-3 ${
                     currencySteps.includes(current) ? "pl-8" : "pl-4"
                   } ${current === "debtRate" ? "pr-9" : "pr-4"} focus:outline-none focus:ring-2 focus:ring-emerald-500/60`}
                 />

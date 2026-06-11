@@ -17,6 +17,7 @@ import { PlanDiagnostics } from "@/components/dashboard/PlanDiagnostics";
 import { ProgressSection } from "@/components/dashboard/ProgressSection";
 import { SharpenPlan } from "@/components/dashboard/SharpenPlan";
 import { ContinueLearningCard } from "@/components/learn/ContinueLearningCard";
+import { MilestonesSection } from "@/components/dashboard/MilestonesSection";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -114,6 +115,9 @@ export default function DashboardPage() {
 
         {/* Your progress — renders only once there's history/deltas/milestones */}
         <ProgressSection metrics={metrics} />
+
+        {/* Milestone map */}
+        <MilestonesSection metrics={metrics} />
 
         {/* Where you're headed */}
         <section className="flex flex-col gap-2">

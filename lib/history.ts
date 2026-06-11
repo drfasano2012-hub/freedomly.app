@@ -1,6 +1,7 @@
 "use client";
 
 import type { FinancialMetrics } from "./types";
+import { formatCurrency } from "./calculations";
 
 /** A point-in-time capture of the user's headline numbers. Stored locally,
  *  one row per calendar day (latest edit wins for the current day). */
@@ -201,6 +202,103 @@ export function newlyReachedMilestones(
     if (!def.achieved(current)) return false;
     return !wasAchievedAt(def.id, baseline);
   }).map(({ id, label, blurb }) => ({ id, label, blurb }));
+}
+
+// ─── Milestone progress map ───────────────────────────────────────────────────
+
+export interface MilestoneProgress extends Milestone {
+  achieved: boolean;
+  pct: number; // 0–1
+  currentDisplay: string;
+  targetDisplay: string;
+  lessonId: string;
+}
+
+const MILESTONE_LESSON_MAP: Record<string, string> = {
+  positive_net_worth: "sr-1",
+  debt_free: "d-1",
+  emergency_3mo: "ef-3",
+  nw_10k: "sr-1",
+  invested_25k: "i-1",
+  savings_rate_20: "sr-1",
+  nw_100k: "i-1",
+  invested_100k: "i-2",
+  freedom_reached: "i-1",
+};
+
+export function getMilestoneProgress(m: FinancialMetrics): MilestoneProgress[] {
+  return MILESTONE_DEFS.map((def) => {
+    const achieved = def.achieved(m);
+    let pct: number;
+    let currentDisplay: string;
+    let targetDisplay: string;
+
+    switch (def.id) {
+      case "positive_net_worth":
+        pct = m.netWorth > 0 ? 1 : 0;
+        currentDisplay = formatCurrency(m.netWorth);
+        targetDisplay = "> $0";
+        break;
+      case "debt_free":
+        pct = m.totalDebt === 0 ? 1 : 0;
+        currentDisplay = formatCurrency(m.totalDebt) + " debt";
+        targetDisplay = "$0 debt";
+        break;
+      case "emergency_3mo":
+        pct = Math.min(m.emergencyFundMonths / 3, 1);
+        currentDisplay = `${m.emergencyFundMonths.toFixed(1)} mo`;
+        targetDisplay = "3 months";
+        break;
+      case "nw_10k":
+        pct = Math.min(Math.max(m.netWorth, 0) / 10_000, 1);
+        currentDisplay = formatCurrency(Math.max(m.netWorth, 0));
+        targetDisplay = "$10,000";
+        break;
+      case "invested_25k":
+        pct = Math.min(m.totalInvestments / 25_000, 1);
+        currentDisplay = formatCurrency(m.totalInvestments);
+        targetDisplay = "$25,000";
+        break;
+      case "savings_rate_20":
+        pct = Math.min(m.savingsRate / 0.2, 1);
+        currentDisplay = `${(m.savingsRate * 100).toFixed(0)}%`;
+        targetDisplay = "20%";
+        break;
+      case "nw_100k":
+        pct = Math.min(Math.max(m.netWorth, 0) / 100_000, 1);
+        currentDisplay = formatCurrency(Math.max(m.netWorth, 0));
+        targetDisplay = "$100,000";
+        break;
+      case "invested_100k":
+        pct = Math.min(m.totalInvestments / 100_000, 1);
+        currentDisplay = formatCurrency(m.totalInvestments);
+        targetDisplay = "$100,000";
+        break;
+      case "freedom_reached":
+        pct =
+          m.freedomAge.fiNumber > 0
+            ? Math.min(m.totalInvestments / m.freedomAge.fiNumber, 1)
+            : 0;
+        currentDisplay = formatCurrency(m.totalInvestments);
+        targetDisplay = formatCurrency(m.freedomAge.fiNumber) + " FI #";
+        break;
+      default:
+        pct = achieved ? 1 : 0;
+        currentDisplay = "";
+        targetDisplay = "";
+    }
+
+    return {
+      id: def.id,
+      label: def.label,
+      blurb: def.blurb,
+      achieved,
+      pct,
+      currentDisplay,
+      targetDisplay,
+      lessonId: MILESTONE_LESSON_MAP[def.id] ?? "sr-1",
+    };
+  });
 }
 
 /** Evaluate a milestone against a stored snapshot's saved fields. */

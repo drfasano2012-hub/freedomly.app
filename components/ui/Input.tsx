@@ -46,7 +46,7 @@ export function Input({
         <input
           id={inputId}
           className={cn(
-            "w-full bg-white/80 border rounded-xl text-slate-800 placeholder:text-slate-400 text-sm py-3 transition-colors",
+            "w-full bg-white/80 border rounded-xl text-slate-800 placeholder:text-slate-400 text-base md:text-sm py-3 transition-colors",
             "focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50",
             error ? "border-red-500/60" : "border-slate-200 hover:border-slate-300",
             prefix ? "pl-8" : "pl-4",
