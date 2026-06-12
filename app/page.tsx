@@ -88,7 +88,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
-            <p className="mt-5 text-xs text-white/40 max-w-md">
+            <p className="mt-5 text-xs text-white/60 max-w-md">
               No account or bank linking required &middot; Benchmarked against Federal
               Reserve &amp; Fidelity data &middot; Free to start
             </p>
@@ -226,8 +226,8 @@ export default function LandingPage() {
                 <path d="M0,150 C130,142 240,96 400,16" fill="none" stroke="#10b981" strokeWidth="3" />
               </svg>
               {/* overlays (HTML, so they don't distort) */}
-              <span className="absolute left-3 bottom-2 text-[10px] font-medium text-slate-400">Today</span>
-              <span className="absolute right-2 top-2 text-[10px] font-semibold text-emerald-700 bg-white/90 border border-emerald-200 rounded-full px-2 py-0.5 shadow-sm">
+              <span className="absolute left-3 bottom-2 text-xs font-medium text-slate-400">Today</span>
+              <span className="absolute right-2 top-2 text-xs font-semibold text-emerald-700 bg-white/90 border border-emerald-200 rounded-full px-2 py-0.5 shadow-sm">
                 Free at 52
               </span>
               <span className="absolute right-3 top-[14%] w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
@@ -298,9 +298,9 @@ export default function LandingPage() {
                 { label: "Net worth", val: "+$6,400", sub: "3 months" },
               ].map((d) => (
                 <div key={d.label} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-                  <p className="text-[10px] text-slate-500 leading-tight">{d.label}</p>
+                  <p className="text-xs text-slate-500 leading-tight">{d.label}</p>
                   <p className="text-sm font-bold text-slate-900 mt-0.5 leading-tight">{d.val}</p>
-                  <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{d.sub}</p>
+                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">{d.sub}</p>
                 </div>
               ))}
             </div>
@@ -320,10 +320,10 @@ export default function LandingPage() {
             {/* fresh next move */}
             <div className="flex items-start gap-3 bg-emerald-50/70 border border-emerald-200 rounded-xl px-4 py-3">
               <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-white text-[10px] font-bold">→</span>
+                <span className="text-white text-xs font-bold">→</span>
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider">Your new next move</p>
+                <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Your new next move</p>
                 <p className="text-sm font-semibold text-slate-900 leading-snug mt-0.5">
                   Debt cleared — now redirect that $400/mo into investing
                 </p>
@@ -370,7 +370,7 @@ export default function LandingPage() {
 
       {/* Footer (extra bottom padding on mobile so the sticky CTA never covers it) */}
       <footer className="border-t border-white/10 px-6 pt-6 pb-28 sm:pb-6 text-center">
-        <p className="text-xs text-white/40">
+        <p className="text-xs text-white/55">
           Freedomly is a financial clarity tool, not financial advice. &copy; 2026 Freedomly
         </p>
       </footer>

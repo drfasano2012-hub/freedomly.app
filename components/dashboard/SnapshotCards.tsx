@@ -83,7 +83,7 @@ export function SnapshotCards({ metrics, monthlyTakeHome, currentAge }: Props) {
           </p>
           <div className="mt-auto flex flex-col gap-1">
             <div>{badge}</div>
-            {sub && <p className="text-[11px] text-slate-500 leading-tight">{sub}</p>}
+            {sub && <p className="text-xs text-slate-600 leading-tight">{sub}</p>}
           </div>
         </div>
       ))}

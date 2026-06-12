@@ -94,7 +94,7 @@ export function ProgressSection({ metrics }: Props) {
 
       {progress && (
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-white/35 px-1">
+          <p className="text-xs text-white/55 px-1">
             Since your last visit · {progress.daysAgo} day{progress.daysAgo === 1 ? "" : "s"} ago
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -153,14 +153,14 @@ function StatPill({
   return (
     <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-3 py-2.5 flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
         <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
       </div>
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-xs text-slate-400 line-through">{from}</span>
         <span className="text-sm font-bold text-slate-800">{to}</span>
       </div>
-      <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${iconColor}`}>
+      <div className={`flex items-center gap-0.5 text-xs font-semibold ${iconColor}`}>
         <Icon size={11} />
         {isZero ? "No change" : isGood ? "Improved" : "Declined"}
       </div>
@@ -194,7 +194,7 @@ function FreedomPill({
   return (
     <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-3 py-2.5 flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Freedom age</span>
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Freedom age</span>
         <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
       </div>
       <div className="flex items-baseline gap-1.5 flex-wrap">
@@ -207,7 +207,7 @@ function FreedomPill({
           <span className="text-sm font-bold text-slate-500">—</span>
         )}
       </div>
-      <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${iconColor}`}>
+      <div className={`flex items-center gap-0.5 text-xs font-semibold ${iconColor}`}>
         <Icon size={11} />
         {changeText}
       </div>

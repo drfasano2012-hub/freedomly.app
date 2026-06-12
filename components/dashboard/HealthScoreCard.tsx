@@ -95,7 +95,7 @@ export function HealthScoreCard({ score, breakdown, potentialScore }: Props) {
             >
               {score}
             </span>
-            <span className="text-xs text-slate-500 mt-0.5">/100</span>
+            <span className="text-xs text-slate-600 mt-0.5">/100</span>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export function HealthScoreCard({ score, breakdown, potentialScore }: Props) {
           >
             {label}
           </span>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             {getScoreDescription(score)}
           </p>
           {scoreDelta >= 5 && (

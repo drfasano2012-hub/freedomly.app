@@ -19,7 +19,7 @@ export function MilestonesSection({ metrics }: Props) {
         <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider">
           Your journey
         </h2>
-        <span className="text-xs text-white/40">
+        <span className="text-xs text-white/55">
           {achievedCount} / {milestones.length} milestones
         </span>
       </div>
@@ -82,7 +82,7 @@ function MilestoneCard({ milestone: m }: { milestone: MilestoneProgress }) {
       {/* Progress bar */}
       {!m.achieved && (
         <div>
-          <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
             <span>{m.currentDisplay}</span>
             <span>{m.targetDisplay}</span>
           </div>
@@ -99,7 +99,7 @@ function MilestoneCard({ milestone: m }: { milestone: MilestoneProgress }) {
       {!m.achieved && (
         <Link
           href={`/learn/${m.lessonId}`}
-          className="self-start flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 transition-colors mt-0.5"
+          className="self-start flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors mt-0.5"
         >
           Learn how
           <ArrowRight size={11} />

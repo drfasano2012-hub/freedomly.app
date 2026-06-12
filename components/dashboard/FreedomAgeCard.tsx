@@ -184,7 +184,7 @@ export function FreedomAgeCard({
           <span className="text-6xl sm:text-7xl font-bold text-slate-800 leading-none" style={{ transition: "color 0.2s" }}>
             {active.freedomAge}
           </span>
-          <span className="text-base text-slate-500 mb-2">years old</span>
+          <span className="text-base text-slate-600 mb-2">years old</span>
           {delta !== null && delta > 0 && (
             <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full mb-1.5">
               {delta} year{delta !== 1 ? "s" : ""} earlier 🎉
@@ -213,7 +213,7 @@ export function FreedomAgeCard({
           <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
             Freedom Age Projection
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             {isAdjusted ? (
               <>
                 Simulating —{" "}
@@ -282,7 +282,7 @@ export function FreedomAgeCard({
           />
 
           {overCashflow && (
-            <p className="text-[11px] text-amber-600 -mt-1">
+            <p className="text-xs text-amber-700 -mt-1">
               Heads up — spending + investing is more than your {formatCurrencyFull(monthlyTakeHome)}/mo take-home.
             </p>
           )}
@@ -307,7 +307,7 @@ export function FreedomAgeCard({
         )}
       </div>
 
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-slate-500 leading-relaxed">
         Assumes 7% real annual return, 4% safe withdrawal rate. FI number = 25× annual spending.
       </p>
     </div>
@@ -366,7 +366,7 @@ function SimControl({
         className="w-full h-2 rounded-full appearance-none cursor-pointer accent-blue-500"
         style={{ background: `linear-gradient(to right, #3b82f6 ${pct}%, #e2e8f0 0%)` }}
       />
-      <div className="flex justify-between text-[11px] text-slate-400">
+      <div className="flex justify-between text-xs text-slate-500">
         <span>{formatCurrencyFull(floor)}</span>
         <span>{nowLabel}</span>
         <span>{formatCurrencyFull(ceil)}</span>

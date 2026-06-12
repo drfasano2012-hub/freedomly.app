@@ -192,7 +192,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">
               Your action plan
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Your highest-impact moves — check them off as you do them.
             </p>
           </div>
@@ -263,7 +263,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
                     {action.impact && (
                       <span
                         className={cn(
-                          "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-tight",
+                          "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold leading-tight",
                           isDone
                             ? "bg-slate-100 text-slate-400"
                             : "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -304,7 +304,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
                       <ol className="mt-3 flex flex-col gap-2.5 border-t border-slate-200 pt-3">
                         {steps.map((s, j) => (
                           <li key={j} className="flex gap-2.5 text-xs text-slate-600 leading-relaxed">
-                            <span className="shrink-0 w-4 h-4 mt-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-[10px]">
+                            <span className="shrink-0 w-4 h-4 mt-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-xs">
                               {j + 1}
                             </span>
                             <span>{s}</span>
@@ -327,7 +327,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-500 border-t border-slate-200 pt-4">
+          <p className="text-xs text-slate-600 border-t border-slate-200 pt-4">
             As you complete these and update your numbers, your plan refreshes and your freedom date moves
             closer. Educational guidance only — not financial advice.
           </p>

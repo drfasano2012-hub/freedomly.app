@@ -21,7 +21,7 @@ import { MilestonesSection } from "@/components/dashboard/MilestonesSection";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
+    <h2 className="text-xs font-semibold text-white/65 uppercase tracking-wider px-1">
       {children}
     </h2>
   );
@@ -73,7 +73,7 @@ export default function DashboardPage() {
         <div className="bg-white/[0.06] border border-white/12 rounded-2xl px-5 py-5 sm:px-6">
           <p className="text-lg sm:text-2xl font-bold text-white leading-snug">{headline}</p>
           {topAction && (
-            <p className="text-sm text-white/60 mt-1.5">
+            <p className="text-sm text-white/70 mt-1.5">
               Your biggest lever right now:{" "}
               <span className="text-emerald-300 font-medium">{topAction.text}</span>
             </p>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
       </main>
 
       <footer className="border-t border-white/50 px-6 py-5 mt-4">
-        <p className="text-xs text-white/40 text-center max-w-6xl mx-auto">
+        <p className="text-xs text-white/55 text-center max-w-6xl mx-auto">
           All calculations are educational estimates. Freedomly is not a financial advisor.
           Assumptions: 7% real annual return, 4% safe withdrawal rate.
           Data source: Federal Reserve SCF 2023, Fidelity, Bureau of Economic Analysis.

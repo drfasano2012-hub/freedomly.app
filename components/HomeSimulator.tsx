@@ -100,7 +100,7 @@ export function HomeSimulator() {
           <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
             Try it — your freedom estimate
           </p>
-          <span className="text-[10px] font-medium text-slate-400">no signup</span>
+          <span className="text-xs font-medium text-slate-400">no signup</span>
         </div>
 
         {/* Headline result */}
@@ -193,7 +193,7 @@ export function HomeSimulator() {
             Get your real plan in 5 minutes &rarr;
           </button>
         </Link>
-        <p className="text-[10px] text-slate-400 text-center -mt-2">
+        <p className="text-xs text-slate-400 text-center -mt-2">
           Educational estimate · 7% return · free, no account
         </p>
       </div>

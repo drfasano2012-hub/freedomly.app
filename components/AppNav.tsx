@@ -86,7 +86,7 @@ export function AppNav() {
                 "text-xs font-medium transition-colors px-2 py-1 rounded-lg",
                 confirmReset
                   ? "text-red-400 bg-red-900/30 border border-red-700/40 animate-pulse"
-                  : "text-white/40 hover:text-white/70"
+                  : "text-white/60 hover:text-white/80"
               )}
             >
               {confirmReset ? "Confirm reset?" : "Reset"}

@@ -410,8 +410,8 @@ export default function CheckupPage() {
               <div className="grid grid-cols-2 gap-2">
                 {MONEY_FIELDS.map((mf) => (
                   <label key={mf.key} className="flex flex-col gap-1">
-                    <span className="text-[11px] text-white/55 font-medium">
-                      {mf.label} <span className="text-white/30">· {mf.hint}</span>
+                    <span className="text-xs text-white/55 font-medium">
+                      {mf.label} <span className="text-white/55">· {mf.hint}</span>
                     </span>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-slate-400 text-sm pointer-events-none">$</span>
@@ -497,7 +497,7 @@ export default function CheckupPage() {
             </form>
           )}
 
-          <p className="text-center text-[11px] text-white/30 mt-3">
+          <p className="text-center text-xs text-white/55 mt-3">
             Your data stays in your browser — never sent to a server.
           </p>
         </div>

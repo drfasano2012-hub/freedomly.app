@@ -87,7 +87,7 @@ export function ContinueLearningCard({ breakdown }: Props) {
           <BookOpen size={20} className="text-emerald-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">
+          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">
             {recommended.track.title}
           </p>
           <p className="text-sm font-semibold text-slate-800 leading-snug group-hover:text-emerald-700 transition-colors">
