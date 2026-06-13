@@ -111,12 +111,6 @@ export default function DashboardPage() {
         {/* Goals + risk deferred from the checkup — shows once, then gone */}
         <SharpenPlan inputs={inputs} setInputs={setInputs} />
 
-        {/* Keep learning */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Keep learning</SectionLabel>
-          <ContinueLearningCard breakdown={metrics.healthScoreBreakdown} />
-        </section>
-
         {/* Milestone map */}
         <MilestonesSection metrics={metrics} />
 
@@ -141,6 +135,12 @@ export default function DashboardPage() {
             goals={inputs.goals}
             employmentType={inputs.employmentType ?? "w2"}
           />
+        </section>
+
+        {/* Keep learning */}
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Keep learning</SectionLabel>
+          <ContinueLearningCard breakdown={metrics.healthScoreBreakdown} />
         </section>
 
         {/* Your progress — compact pills at end */}
