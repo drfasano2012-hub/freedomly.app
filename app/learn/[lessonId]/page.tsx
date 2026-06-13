@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Zap, BookOpen } from "luc
 import Link from "next/link";
 import { AppNav } from "@/components/AppNav";
 import { cn } from "@/lib/utils";
-import { getLessonById, getTrackById } from "@/content/lessons";
+import { getLessonById, getTrackById, getNextLesson } from "@/content/lessons";
 import { completeLesson, loadProgress, getLevelProgress } from "@/lib/learn-progress";
 import { track } from "@/lib/analytics";
 import type { LearnProgress } from "@/lib/types";
@@ -274,6 +274,8 @@ export default function LessonPage() {
   if (phase.type === "complete") {
     const { xpEarned, newProgress } = phase;
     const levelData = getLevelProgress(newProgress.xp);
+    const nextLesson = getNextLesson(lesson.id);
+    const nextTrack = nextLesson ? getTrackById(nextLesson.trackId) : undefined;
 
     return (
       <div className="min-h-screen bg-transparent flex flex-col page-in">
@@ -324,10 +326,33 @@ export default function LessonPage() {
 
           {/* CTAs */}
           <div className="flex flex-col gap-3">
+            {nextLesson ? (
+              <Link
+                href={`/learn/${nextLesson.id}`}
+                className="flex items-center justify-between gap-3 h-auto min-h-[3.5rem] px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
+              >
+                <div className="flex flex-col items-start gap-0.5 py-3">
+                  <span className="text-xs font-normal text-emerald-100">
+                    {nextLesson.trackId !== lesson.trackId && nextTrack
+                      ? `Next track: ${nextTrack.title}`
+                      : "Next lesson"}
+                  </span>
+                  <span className="leading-snug">{nextLesson.title}</span>
+                </div>
+                <ArrowRight size={18} className="shrink-0" />
+              </Link>
+            ) : (
+              <Link
+                href="/learn"
+                className="flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
+              >
+                All lessons complete 🎉
+              </Link>
+            )}
             {lesson.relatedActionId && (
               <Link
                 href="/dashboard"
-                className="flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
+                className="flex items-center justify-center gap-2 h-12 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 font-semibold text-sm transition-colors"
               >
                 Put this into practice
                 <ArrowRight size={18} />
@@ -335,9 +360,9 @@ export default function LessonPage() {
             )}
             <Link
               href="/learn"
-              className="flex items-center justify-center gap-2 h-12 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 font-semibold text-sm transition-colors"
+              className="flex items-center justify-center gap-2 h-12 rounded-xl border border-white/10 text-white/50 hover:text-white/70 hover:border-white/20 text-sm transition-colors"
             >
-              Back to Learn
+              Browse all lessons
             </Link>
           </div>
         </main>

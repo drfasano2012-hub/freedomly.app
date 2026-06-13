@@ -496,3 +496,25 @@ export function getLessonsByTrack(trackId: string): Lesson[] {
 export function getTrackById(id: string): Track | undefined {
   return TRACKS.find((t) => t.id === id);
 }
+
+/** Returns the next lesson after the given one — continuing in the same track,
+ *  then spilling into the first lesson of the next track. */
+export function getNextLesson(lessonId: string): Lesson | undefined {
+  const current = getLessonById(lessonId);
+  if (!current) return undefined;
+
+  const trackLessons = getLessonsByTrack(current.trackId);
+  const idx = trackLessons.findIndex((l) => l.id === lessonId);
+  if (idx !== -1 && idx < trackLessons.length - 1) {
+    return trackLessons[idx + 1];
+  }
+
+  // Spill into the first lesson of the next track
+  const trackIdx = TRACKS.findIndex((t) => t.id === current.trackId);
+  if (trackIdx !== -1 && trackIdx < TRACKS.length - 1) {
+    const nextTrack = TRACKS[trackIdx + 1];
+    return getLessonsByTrack(nextTrack.id)[0];
+  }
+
+  return undefined;
+}
