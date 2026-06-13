@@ -17,6 +17,16 @@ type PlayerPhase =
   | { type: "result"; correct: boolean }
   | { type: "complete"; xpEarned: number; newProgress: LearnProgress };
 
+/** Shared full-viewport shell — nav at top, content fills the rest with no page scroll. */
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="h-screen h-dvh bg-transparent flex flex-col page-in">
+      <AppNav />
+      {children}
+    </div>
+  );
+}
+
 export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
@@ -39,15 +49,14 @@ export default function LessonPage() {
 
   if (!lesson || !trackData) {
     return (
-      <div className="min-h-screen bg-transparent">
-        <AppNav />
-        <main className="max-w-xl mx-auto px-4 py-16 text-center">
+      <Shell>
+        <main className="flex-1 max-w-xl mx-auto w-full px-4 py-16 text-center">
           <p className="text-white/60 text-sm">Lesson not found.</p>
           <Link href="/learn" className="mt-4 inline-block text-sm text-emerald-400 hover:text-emerald-300">
             ← Back to Learn
           </Link>
         </main>
-      </div>
+      </Shell>
     );
   }
 
@@ -115,11 +124,10 @@ export default function LessonPage() {
     const isLast = phase.index === totalCards - 1;
 
     return (
-      <div className="min-h-screen bg-transparent flex flex-col page-in">
-        <AppNav />
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
+      <Shell>
+        <main className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
           {/* Top bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between shrink-0">
             <Link
               href="/learn"
               className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
@@ -130,16 +138,16 @@ export default function LessonPage() {
             {progressDots(phase.index)}
           </div>
 
-          {/* Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-white/60 shadow-lg rounded-2xl p-6 flex-1 flex flex-col gap-4">
+          {/* Card — scrolls inside if content overflows */}
+          <div className="bg-white/80 backdrop-blur-sm border border-white/60 shadow-lg rounded-2xl p-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
             {card.heading && (
               <h2 className="text-base font-bold text-slate-900 leading-snug">{card.heading}</h2>
             )}
-            <p className="text-sm text-slate-600 leading-relaxed flex-1">{card.body}</p>
+            <p className="text-sm text-slate-600 leading-relaxed">{card.body}</p>
           </div>
 
-          {/* Nav buttons */}
-          <div className="flex gap-3">
+          {/* Nav buttons — always visible */}
+          <div className="flex gap-3 shrink-0 pb-safe">
             {phase.index > 0 && (
               <button
                 onClick={prevCard}
@@ -158,18 +166,17 @@ export default function LessonPage() {
             </button>
           </div>
         </main>
-      </div>
+      </Shell>
     );
   }
 
   // ── Quiz phase ──────────────────────────────────────────────────────────────
   if (phase.type === "quiz") {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col page-in">
-        <AppNav />
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
+      <Shell>
+        <main className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
           {/* Top bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between shrink-0">
             <button
               onClick={() => setPhase({ type: "card", index: totalCards - 1 })}
               className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
@@ -180,8 +187,8 @@ export default function LessonPage() {
             {progressDots(totalCards)}
           </div>
 
-          {/* Quiz card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-white/60 shadow-lg rounded-2xl p-6 flex flex-col gap-5">
+          {/* Quiz card — scrolls inside if content overflows */}
+          <div className="bg-white/80 backdrop-blur-sm border border-white/60 shadow-lg rounded-2xl p-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-5">
             <div>
               <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-2">
                 Quick check
@@ -209,15 +216,16 @@ export default function LessonPage() {
             </div>
           </div>
 
+          {/* Submit — always visible */}
           <button
             onClick={submitQuiz}
             disabled={selectedOption === null}
-            className="h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+            className="h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shrink-0 pb-safe"
           >
             Submit answer
           </button>
         </main>
-      </div>
+      </Shell>
     );
   }
 
@@ -225,13 +233,12 @@ export default function LessonPage() {
   if (phase.type === "result") {
     const { correct } = phase;
     return (
-      <div className="min-h-screen bg-transparent flex flex-col page-in">
-        <AppNav />
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
-          {/* Result card */}
+      <Shell>
+        <main className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
+          {/* Result card — scrolls inside if content overflows */}
           <div
             className={cn(
-              "bg-white/80 backdrop-blur-sm border shadow-lg rounded-2xl p-6 flex flex-col gap-4",
+              "bg-white/80 backdrop-blur-sm border shadow-lg rounded-2xl p-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-4",
               correct ? "border-emerald-300" : "border-amber-300"
             )}
           >
@@ -258,15 +265,16 @@ export default function LessonPage() {
             )}
           </div>
 
+          {/* Continue — always visible */}
           <button
             onClick={() => finishLesson(correct)}
-            className="h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+            className="h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 shrink-0"
           >
             {alreadyCompleted ? "Back to Learn" : `Finish lesson${correct ? " — claim XP" : ""}`}
             <ArrowRight size={18} />
           </button>
         </main>
-      </div>
+      </Shell>
     );
   }
 
@@ -278,12 +286,11 @@ export default function LessonPage() {
     const nextTrack = nextLesson ? getTrackById(nextLesson.trackId) : undefined;
 
     return (
-      <div className="min-h-screen bg-transparent flex flex-col page-in">
-        <AppNav />
-        <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8 flex flex-col gap-6">
-          {/* Completion card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-emerald-200 shadow-lg rounded-2xl p-6 flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center">
+      <Shell>
+        <main className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
+          {/* Completion card — scrolls inside if content overflows */}
+          <div className="bg-white/80 backdrop-blur-sm border border-emerald-200 shadow-lg rounded-2xl p-6 flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
               <BookOpen size={32} className="text-emerald-600" />
             </div>
             <div>
@@ -292,7 +299,7 @@ export default function LessonPage() {
             </div>
 
             {xpEarned > 0 && (
-              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2">
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 shrink-0">
                 <Zap size={16} className="text-emerald-600" />
                 <span className="text-sm font-bold text-emerald-700">+{xpEarned} XP earned</span>
               </div>
@@ -324,14 +331,14 @@ export default function LessonPage() {
             </div>
           </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col gap-3">
+          {/* CTAs — always visible */}
+          <div className="flex flex-col gap-2 shrink-0">
             {nextLesson ? (
               <Link
                 href={`/learn/${nextLesson.id}`}
-                className="flex items-center justify-between gap-3 h-auto min-h-[3.5rem] px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
+                className="flex items-center justify-between gap-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors min-h-[3.25rem]"
               >
-                <div className="flex flex-col items-start gap-0.5 py-3">
+                <div className="flex flex-col items-start gap-0.5 py-2.5">
                   <span className="text-xs font-normal text-emerald-100">
                     {nextLesson.trackId !== lesson.trackId && nextTrack
                       ? `Next track: ${nextTrack.title}`
@@ -352,7 +359,7 @@ export default function LessonPage() {
             {lesson.relatedActionId && (
               <Link
                 href="/dashboard"
-                className="flex items-center justify-center gap-2 h-12 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 font-semibold text-sm transition-colors"
+                className="flex items-center justify-center gap-2 h-11 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 font-semibold text-sm transition-colors"
               >
                 Put this into practice
                 <ArrowRight size={18} />
@@ -360,13 +367,13 @@ export default function LessonPage() {
             )}
             <Link
               href="/learn"
-              className="flex items-center justify-center gap-2 h-12 rounded-xl border border-white/10 text-white/50 hover:text-white/70 hover:border-white/20 text-sm transition-colors"
+              className="flex items-center justify-center gap-2 h-10 rounded-xl border border-white/10 text-white/50 hover:text-white/70 hover:border-white/20 text-sm transition-colors"
             >
               Browse all lessons
             </Link>
           </div>
         </main>
-      </div>
+      </Shell>
     );
   }
 
