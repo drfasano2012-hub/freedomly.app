@@ -351,8 +351,8 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
                 >
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${horizon.color}`} />
                   <span className="text-xs text-slate-600">{goal.label}</span>
-                  <span className="text-xs text-slate-400">·</span>
-                  <span className="text-xs text-slate-400">{horizon.label}</span>
+                  <span className="text-xs text-slate-500">·</span>
+                  <span className="text-xs text-slate-500">{horizon.label}</span>
                 </div>
               );
             })}

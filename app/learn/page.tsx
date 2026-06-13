@@ -26,9 +26,11 @@ export default function LearnPage() {
     xp: 0,
     weeklyActivity: [],
   });
+  const [learnHydrated, setLearnHydrated] = useState(false);
 
   useEffect(() => {
     setProgress(loadProgress());
+    setLearnHydrated(true);
   }, []);
 
   const metrics = hydrated && inputs ? calcAllMetrics(inputs) : null;
@@ -46,7 +48,7 @@ export default function LearnPage() {
   const completedCount = Object.keys(progress.lessons).length;
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-transparent page-in">
       <AppNav />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
@@ -59,6 +61,9 @@ export default function LearnPage() {
         </div>
 
         {/* Progress bar + level + streak */}
+        {!learnHydrated ? (
+          <div className="skeleton rounded-2xl h-20" />
+        ) : (
         <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl px-5 py-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -90,11 +95,12 @@ export default function LearnPage() {
             </p>
           )}
         </div>
+        )}
 
         {/* Recommended next lesson */}
         {recommended && (
           <section className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
+            <h2 className="text-xs font-semibold text-white/65 uppercase tracking-wider px-1">
               Up next for you
             </h2>
             <Link
@@ -133,7 +139,7 @@ export default function LearnPage() {
 
         {/* Tracks */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
+          <h2 className="text-xs font-semibold text-white/65 uppercase tracking-wider px-1">
             All tracks
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

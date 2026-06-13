@@ -115,7 +115,7 @@ export default function LessonPage() {
     const isLast = phase.index === totalCards - 1;
 
     return (
-      <div className="min-h-screen bg-transparent flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col page-in">
         <AppNav />
         <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
           {/* Top bar */}
@@ -165,7 +165,7 @@ export default function LessonPage() {
   // ── Quiz phase ──────────────────────────────────────────────────────────────
   if (phase.type === "quiz") {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col page-in">
         <AppNav />
         <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
           {/* Top bar */}
@@ -225,7 +225,7 @@ export default function LessonPage() {
   if (phase.type === "result") {
     const { correct } = phase;
     return (
-      <div className="min-h-screen bg-transparent flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col page-in">
         <AppNav />
         <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col gap-5">
           {/* Result card */}
@@ -276,7 +276,7 @@ export default function LessonPage() {
     const levelData = getLevelProgress(newProgress.xp);
 
     return (
-      <div className="min-h-screen bg-transparent flex flex-col">
+      <div className="min-h-screen bg-transparent flex flex-col page-in">
         <AppNav />
         <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8 flex flex-col gap-6">
           {/* Completion card */}

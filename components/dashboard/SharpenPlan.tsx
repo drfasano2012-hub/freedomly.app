@@ -68,7 +68,7 @@ export function SharpenPlan({ inputs, setInputs }: Props) {
       </div>
 
       <div>
-        <p className="text-xs text-white/50 mb-2">What are you working toward?</p>
+        <p className="text-xs text-white/65 mb-2">What are you working toward?</p>
         <div className="flex flex-wrap gap-2">
           {GOALS.map((g) => {
             const on = goalIds.includes(g.id);
@@ -95,7 +95,7 @@ export function SharpenPlan({ inputs, setInputs }: Props) {
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
         <div className="flex items-center gap-2">
-          <p className="text-xs text-white/50">Investment risk:</p>
+          <p className="text-xs text-white/65">Investment risk:</p>
           <div className="flex gap-1.5">
             {RISK_OPTIONS.map((o) => (
               <button

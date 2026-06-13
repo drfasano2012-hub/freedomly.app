@@ -182,7 +182,7 @@ export function FreedomAgeCard({
       <div className="flex flex-col gap-2">
         <div className="flex items-end gap-3 flex-wrap">
           <span className="text-6xl sm:text-7xl font-bold text-slate-800 leading-none" style={{ transition: "color 0.2s" }}>
-            {active.freedomAge}
+            {active.freedomAge ?? "—"}
           </span>
           <span className="text-base text-slate-600 mb-2">years old</span>
           {delta !== null && delta > 0 && (

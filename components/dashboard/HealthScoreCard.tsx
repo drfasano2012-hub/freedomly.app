@@ -1,4 +1,3 @@
-import { formatPercent } from "@/lib/calculations";
 import type { HealthScoreBreakdown } from "@/lib/types";
 
 interface Props {

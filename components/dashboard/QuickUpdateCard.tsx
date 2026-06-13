@@ -40,7 +40,7 @@ export function QuickUpdateCard({ inputs, setInputs, lastUpdated }: Props) {
       : `${days} days ago`;
 
   function setField(key: keyof typeof draft, value: string) {
-    const num = parseInt(value.replace(/[^0-9]/g, ""), 10);
+    const num = Math.round(parseFloat(value) || 0);
     setDraft((d) => ({ ...d, [key]: isNaN(num) ? 0 : num }));
   }
 

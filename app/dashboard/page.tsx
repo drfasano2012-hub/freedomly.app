@@ -65,7 +65,7 @@ export default function DashboardPage() {
       : "Let's chart your path to financial independence.";
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-transparent page-in">
       <AppNav />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
 
         {/* The details — collapsible */}
         <details className="group">
-          <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white/70 uppercase tracking-wider px-1 select-none">
+          <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-semibold text-white/65 hover:text-white/80 uppercase tracking-wider px-1 select-none">
             <span>The details</span>
             <ChevronDown size={14} className="transition-transform group-open:rotate-180" />
           </summary>

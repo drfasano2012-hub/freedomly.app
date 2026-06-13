@@ -28,7 +28,17 @@ export function ContinueLearningCard({ breakdown }: Props) {
     setHydrated(true);
   }, []);
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-5 flex items-center gap-4">
+        <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+        <div className="flex-1 flex flex-col gap-2">
+          <div className="skeleton h-3 w-1/3 rounded-full" />
+          <div className="skeleton h-3 w-2/3 rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
   const recommended = getRecommendedLesson(breakdown, progress);
   const levelData = getLevelProgress(progress.xp);
