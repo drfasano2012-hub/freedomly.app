@@ -18,6 +18,7 @@ import { ProgressSection } from "@/components/dashboard/ProgressSection";
 import { SharpenPlan } from "@/components/dashboard/SharpenPlan";
 import { ContinueLearningCard } from "@/components/learn/ContinueLearningCard";
 import { MilestonesSection } from "@/components/dashboard/MilestonesSection";
+import { QuickUpdateCard } from "@/components/dashboard/QuickUpdateCard";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -29,7 +30,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { inputs, setInputs, hasCompletedCheckup, hydrated } = useFinancialData();
+  const { inputs, setInputs, hasCompletedCheckup, hydrated, lastUpdated } = useFinancialData();
 
   useEffect(() => {
     if (hydrated && !hasCompletedCheckup) {
@@ -103,6 +104,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* Stale-data nudge — only shows when numbers are >7 days old */}
+        <QuickUpdateCard inputs={inputs} setInputs={setInputs} lastUpdated={lastUpdated} />
 
         {/* Goals + risk deferred from the checkup — shows once, then gone */}
         <SharpenPlan inputs={inputs} setInputs={setInputs} />

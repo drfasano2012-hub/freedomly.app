@@ -3,6 +3,7 @@ import { TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MobileStickyCTA } from "@/components/MobileStickyCTA";
 import { HomeSimulator } from "@/components/HomeSimulator";
+import { HomeRedirect } from "@/components/HomeRedirect";
 
 /* ───────────────────────── small building blocks ───────────────────────── */
 
@@ -50,6 +51,7 @@ function SectionHeading({
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-transparent flex flex-col">
+      <HomeRedirect />
       {/* Header */}
       <header className="px-6 py-5 flex items-center max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2">
