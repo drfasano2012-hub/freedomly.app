@@ -134,6 +134,7 @@ export default function DashboardPage() {
             actionPlan={metrics.actionPlan}
             goals={inputs.goals}
             employmentType={inputs.employmentType ?? "w2"}
+            householdType={inputs.householdType ?? "solo"}
           />
         </section>
 

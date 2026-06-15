@@ -6,12 +6,13 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { awardActionXp } from "@/lib/learn-progress";
-import type { ActionPlanResult, Goal, GoalHorizon, EmploymentType } from "@/lib/types";
+import type { ActionPlanResult, Goal, GoalHorizon, EmploymentType, HouseholdType } from "@/lib/types";
 
 interface Props {
   actionPlan: ActionPlanResult;
   goals: Goal[];
   employmentType: EmploymentType;
+  householdType: HouseholdType;
 }
 
 const ACTIONS_KEY = "freedomly_actions_done";
@@ -93,45 +94,58 @@ const PLAYBOOKS: Record<string, string[]> = {
   ],
 };
 
-/** Retirement steps differ by employment status — this is the whole point of asking. */
-const RETIREMENT_PLAYBOOKS: Record<EmploymentType, string[]> = {
-  w2: [
-    "First, get the full 401(k) employer match — it's free money. Set your contribution to at least the match.",
-    "Next, open or fund a Roth IRA at Fidelity, Schwab, or Vanguard ($7,000/yr).",
-    "Have an HSA? Contribute — it's triple tax-advantaged.",
-    "Then raise your 401(k) toward the annual max.",
-  ],
-  self_employed: [
-    "Open a Solo 401(k) or SEP-IRA at Fidelity, Schwab, or Vanguard (free, ~20 minutes).",
-    "A Solo 401(k) lets you contribute as both employee AND employer — far more than a regular IRA.",
-    "Automate a monthly contribution from your business income.",
-    "Invest it in a low-cost index fund — don't leave it sitting in cash.",
-  ],
-  business_owner: [
-    "Open a Solo 401(k) or SEP-IRA (or a SIMPLE IRA if you have employees) at a major brokerage.",
-    "These shelter far more than a regular IRA — you contribute as both employee and employer.",
-    "Automate a monthly contribution from the business.",
-    "Ask a CPA which account fits your business structure — the tax savings are significant.",
-  ],
-  not_employed: [
-    "If your spouse has earned income, open a Spousal Roth IRA — it keeps your tax-free investing going.",
-    "Roll any old 401(k)s into an IRA so they're not lost or stuck in cash.",
-    "Keep a slightly larger emergency buffer while income is paused.",
-    "When income resumes, prioritize the employer match / Solo 401(k) again.",
-  ],
-};
+/** Retirement steps differ by employment status and household type. */
+function buildRetirementPlaybook(emp: EmploymentType, household: HouseholdType): string[] {
+  const combined = household === "combined";
+  const rothLine = combined
+    ? "You and your partner can each fund a Roth IRA at Fidelity, Schwab, or Vanguard ($7,000/person/yr = $14,000/yr household)."
+    : "Open or fund a Roth IRA at Fidelity, Schwab, or Vanguard ($7,000/yr).";
 
-function playbookFor(actionId: string, emp: EmploymentType): string[] {
+  switch (emp) {
+    case "w2":
+      return [
+        "First, get the full 401(k) employer match — it's free money. Set your contribution to at least the match.",
+        rothLine,
+        "Have an HSA? Contribute — it's triple tax-advantaged.",
+        "Then raise your 401(k) toward the annual max.",
+      ];
+    case "self_employed":
+      return [
+        "Open a Solo 401(k) or SEP-IRA at Fidelity, Schwab, or Vanguard (free, ~20 minutes).",
+        "A Solo 401(k) lets you contribute as both employee AND employer — far more than a regular IRA.",
+        combined ? "Your partner can also max a Roth IRA ($7,000/yr) if they have earned income." : rothLine,
+        "Invest in a low-cost index fund — don't leave it sitting in cash.",
+      ];
+    case "business_owner":
+      return [
+        "Open a Solo 401(k) or SEP-IRA (or a SIMPLE IRA if you have employees) at a major brokerage.",
+        "These shelter far more than a regular IRA — you contribute as both employee and employer.",
+        combined ? "Your partner can also fund a Roth IRA ($7,000/yr) if they have earned income." : rothLine,
+        "Ask a CPA which account fits your business structure — the tax savings are significant.",
+      ];
+    case "not_employed":
+      return [
+        combined
+          ? "Your partner's earned income qualifies you for a Spousal Roth IRA — use it to keep tax-free investing going."
+          : "Roll any old 401(k)s into an IRA so they're not lost or sitting in cash.",
+        "Roll any old 401(k)s into an IRA so they're accessible and invested.",
+        "Keep a slightly larger emergency buffer while income is paused.",
+        "When income resumes, prioritize the employer match / Solo 401(k) again.",
+      ];
+  }
+}
+
+function playbookFor(actionId: string, emp: EmploymentType, household: HouseholdType): string[] {
   if (
     actionId === "start_investing" ||
     actionId === "max_tax_advantaged" ||
     actionId === "roth_ira"
   )
-    return RETIREMENT_PLAYBOOKS[emp];
+    return buildRetirementPlaybook(emp, household);
   return PLAYBOOKS[actionId] ?? [];
 }
 
-export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
+export function ActionPlan({ actionPlan, goals, employmentType, householdType }: Props) {
   const { topActions } = actionPlan;
 
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
@@ -220,7 +234,7 @@ export function ActionPlan({ actionPlan, goals, employmentType }: Props) {
           {topActions.map((action) => {
             const isDone = doneIds.has(action.id);
             const isOpen = openId === action.id;
-            const steps = playbookFor(action.id, employmentType);
+            const steps = playbookFor(action.id, employmentType, householdType);
             return (
               <li
                 key={action.id}

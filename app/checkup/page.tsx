@@ -9,6 +9,7 @@ import { GOALS } from "@/lib/profile-options";
 import type {
   RiskTolerance,
   EmploymentType,
+  HouseholdType,
   UserInputs,
   Debt,
   Goal,
@@ -21,6 +22,12 @@ const EMPLOYMENT_OPTIONS: { value: EmploymentType; label: string; icon: string }
   { value: "self_employed", label: "Self-employed", icon: "🧑‍💻" },
   { value: "business_owner", label: "Business owner", icon: "🏢" },
   { value: "not_employed", label: "Not working now", icon: "🌿" },
+];
+
+const HOUSEHOLD_OPTIONS: { value: HouseholdType; label: string; icon: string; sub: string }[] = [
+  { value: "solo", label: "Just me", icon: "🙋", sub: "Planning solo" },
+  { value: "combined", label: "Partner (combined)", icon: "👫", sub: "We manage money together" },
+  { value: "separate", label: "Partner (separate)", icon: "🤝", sub: "Together but finances are independent" },
 ];
 
 interface FormData {
@@ -36,12 +43,13 @@ interface FormData {
   selectedGoalIds: string[];
   riskTolerance: RiskTolerance | "";
   employmentType: EmploymentType | "";
+  householdType: HouseholdType | "";
 }
 
 const EMPTY_FORM: FormData = {
   currentAge: "", annualIncome: "", monthlyTakeHome: "", monthlySpending: "",
   cashSavings: "", retirementAccounts: "", brokerageAccounts: "", hsaAccounts: "",
-  debts: [], selectedGoalIds: [], riskTolerance: "", employmentType: "",
+  debts: [], selectedGoalIds: [], riskTolerance: "", employmentType: "", householdType: "",
 };
 
 const parseNum = (s: string) => parseFloat(s.replace(/,/g, "")) || 0;
@@ -61,13 +69,14 @@ function sampleToForm(s: UserInputs): FormData {
     selectedGoalIds: s.goals.map((g) => g.id),
     riskTolerance: s.riskTolerance,
     employmentType: s.employmentType ?? "w2",
+    householdType: s.householdType ?? "solo",
   };
 }
 
 // ─── Conversation script ───────────────────────────────────────────────────────
 
 type StepId =
-  | "intro" | "age" | "employment" | "takeHome" | "spending"
+  | "intro" | "age" | "household" | "employment" | "takeHome" | "spending"
   | "money" | "debtsAsk"
   | "debtName" | "debtBalance" | "debtRate" | "debtMore"
   | "done";
@@ -75,7 +84,8 @@ type StepId =
 const PROMPT: Record<StepId, string> = {
   intro: "Hey 👋 I'm Freedomly. I'll ask a few quick questions, then map your path to financial independence. Takes about a minute — and your answers never leave your browser.",
   age: "First up — how old are you?",
-  employment: "Got it. What best describes your work?",
+  household: "Are you planning this solo, or do you manage finances with a partner?",
+  employment: "Got it. What best describes your work situation?",
   takeHome: "Roughly how much do you take home each month, after taxes?",
   spending: "About how much do you spend in a typical month?",
   money: "Last big one — roughly what do you have saved and invested? Ballpark is fine, and skip anything that doesn't apply.",
@@ -89,7 +99,7 @@ const PROMPT: Record<StepId, string> = {
 
 // linear "send/choice" transitions (money + debts handled specially)
 const NEXT: Partial<Record<StepId, StepId>> = {
-  age: "employment", employment: "takeHome", takeHome: "spending",
+  age: "household", household: "employment", employment: "takeHome", takeHome: "spending",
   spending: "money",
 };
 
@@ -103,7 +113,7 @@ const FIELD_OF: Partial<Record<StepId, AmountField>> = {
 
 const REQUIRED = new Set<StepId>(["age", "takeHome", "spending"]);
 const PROGRESS_ORDER: StepId[] = [
-  "age", "employment", "takeHome", "spending", "money", "debtsAsk",
+  "age", "household", "employment", "takeHome", "spending", "money", "debtsAsk",
 ];
 
 // the one grouped step: four balances in a single card
@@ -219,6 +229,7 @@ export default function CheckupPage() {
       ),
       riskTolerance: (f.riskTolerance || "moderate") as RiskTolerance,
       employmentType: (f.employmentType || "w2") as EmploymentType,
+      householdType: (f.householdType || "solo") as HouseholdType,
     };
     setInputs(built);
     track("checkup_completed", {
@@ -250,6 +261,12 @@ export default function CheckupPage() {
     setForm((f) => ({ ...f, [field]: inputVal }));
     pushUser(current === "age" ? inputVal : fmtUSD(n));
     advance(current);
+  }
+
+  function chooseHousehold(o: (typeof HOUSEHOLD_OPTIONS)[number]) {
+    setForm((f) => ({ ...f, householdType: o.value }));
+    pushUser(`${o.icon} ${o.label}`);
+    advance("household");
   }
 
   function chooseEmployment(o: (typeof EMPLOYMENT_OPTIONS)[number]) {
@@ -394,6 +411,24 @@ export default function CheckupPage() {
           {!typing && current === "intro" && (
             <div className="flex">
               <Chip primary onClick={() => { pushUser("Let's go"); ask("age"); }}>Let&rsquo;s go →</Chip>
+            </div>
+          )}
+
+          {!typing && current === "household" && (
+            <div className="flex flex-col gap-2">
+              {HOUSEHOLD_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  onClick={() => chooseHousehold(o)}
+                  className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-xl px-4 py-3 text-left transition-colors"
+                >
+                  <span className="text-xl shrink-0">{o.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{o.label}</p>
+                    <p className="text-xs text-white/55">{o.sub}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
 

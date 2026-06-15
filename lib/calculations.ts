@@ -656,6 +656,7 @@ export function getSampleData(): UserInputs {
     ],
     riskTolerance: "moderate",
     employmentType: "w2",
+    householdType: "solo",
   };
 }
 

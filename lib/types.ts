@@ -17,6 +17,8 @@ export type RiskTolerance = "conservative" | "moderate" | "aggressive";
 
 export type EmploymentType = "w2" | "self_employed" | "business_owner" | "not_employed";
 
+export type HouseholdType = "solo" | "combined" | "separate";
+
 export interface UserInputs {
   currentAge: number;
   annualIncome: number; // optional — defaults to monthlyTakeHome * 12
@@ -30,6 +32,7 @@ export interface UserInputs {
   goals: Goal[];
   riskTolerance: RiskTolerance;
   employmentType: EmploymentType; // older localStorage records may lack this → default "w2" on read
+  householdType: HouseholdType;   // older localStorage records may lack this → default "solo" on read
 }
 
 // All derived metrics — never persisted
