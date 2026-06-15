@@ -10,7 +10,7 @@ export function HomeRedirect() {
 
   useEffect(() => {
     if (hydrated && hasCompletedCheckup) {
-      router.replace("/dashboard");
+      router.replace("/home");
     }
   }, [hydrated, hasCompletedCheckup, router]);
 

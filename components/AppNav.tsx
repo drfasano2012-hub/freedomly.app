@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/learn", label: "Learn" },
-  { href: "/tools", label: "Tools" },
-  { href: "/coaching", label: "Coaching" },
+  { href: "/home", label: "Home", requiresCheckup: true },
+  { href: "/dashboard", label: "Plan", requiresCheckup: true },
+  { href: "/learn", label: "Learn", requiresCheckup: false },
+  { href: "/tools", label: "Tools", requiresCheckup: false },
+  { href: "/coaching", label: "Coaching", requiresCheckup: false },
 ];
 
 export function AppNav() {
@@ -55,9 +56,9 @@ export function AppNav() {
 
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label }) => {
-            if (href === "/dashboard" && !hasCompletedCheckup) return null;
-            const active = pathname === href;
+          {NAV_LINKS.map(({ href, label, requiresCheckup }) => {
+            if (requiresCheckup && !hasCompletedCheckup) return null;
+            const active = pathname === href || (href === "/home" && pathname === "/");
             return (
               <Link
                 key={href}
