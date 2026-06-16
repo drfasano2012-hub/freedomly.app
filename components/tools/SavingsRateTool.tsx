@@ -145,7 +145,7 @@ export function SavingsRateTool({
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed">
-            Assumes 7% real annual return and starting from $0 invested. FI number = 25× annual spending.
+            Assumes 7% real annual return and starting from $0 invested. Freedom number = 25× annual spending.
             Each row shows: at this savings rate, how many years until your portfolio covers 25× your spending.
           </p>
         </div>

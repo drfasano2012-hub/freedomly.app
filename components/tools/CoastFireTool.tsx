@@ -96,7 +96,7 @@ export function CoastFireTool({ initialAge = 30, initialInvested = 0 }: Props) {
                   You&rsquo;ve reached Coast FIRE!
                 </p>
                 <p className="text-xs text-emerald-800 leading-relaxed">
-                  Your current investments of {formatCurrencyFull(inv)} will grow to your FI number of{" "}
+                  Your current investments of {formatCurrencyFull(inv)} will grow to your freedom number of{" "}
                   {formatCurrencyFull(result.fiNumber)} by age {retirementAge} at {formatPercent(ret, 0)} annual
                   return — without any additional contributions.
                 </p>
@@ -108,7 +108,7 @@ export function CoastFireTool({ initialAge = 30, initialInvested = 0 }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <ResultCard
-                  label="FI number"
+                  label="Freedom number"
                   value={formatCurrencyFull(result.fiNumber)}
                   hint={`25× $${sp.toLocaleString()} annual spending`}
                 />

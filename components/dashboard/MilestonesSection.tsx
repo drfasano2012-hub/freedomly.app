@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Lock, ArrowRight } from "lucide-react";
+import { CheckCircle2, ChevronDown, Lock, ArrowRight } from "lucide-react";
 import { getMilestoneProgress, type MilestoneProgress } from "@/lib/history";
 import type { FinancialMetrics } from "@/lib/types";
 
@@ -9,9 +10,20 @@ interface Props {
   metrics: FinancialMetrics;
 }
 
+const PREVIEW_COUNT = 3;
+
 export function MilestonesSection({ metrics }: Props) {
   const milestones = getMilestoneProgress(metrics);
   const achievedCount = milestones.filter((m) => m.achieved).length;
+  const [expanded, setExpanded] = useState(false);
+
+  // Default view: the nearest unachieved milestones, so returning users see
+  // what's next instead of scrolling past everything they've already hit.
+  const unachieved = [...milestones].filter((m) => !m.achieved).sort((a, b) => b.pct - a.pct);
+  const preview = unachieved.slice(0, PREVIEW_COUNT);
+  const showAll = expanded || unachieved.length === 0;
+  const visible = showAll ? milestones : preview;
+  const hasMore = !showAll && visible.length < milestones.length;
 
   return (
     <section className="flex flex-col gap-2">
@@ -38,10 +50,20 @@ export function MilestonesSection({ metrics }: Props) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {milestones.map((m) => (
+          {visible.map((m) => (
             <MilestoneCard key={m.id} milestone={m} />
           ))}
         </div>
+
+        {hasMore && (
+          <button
+            onClick={() => setExpanded(true)}
+            className="self-start flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors mt-3"
+          >
+            See all {milestones.length} milestones
+            <ChevronDown size={13} />
+          </button>
+        )}
       </div>
     </section>
   );

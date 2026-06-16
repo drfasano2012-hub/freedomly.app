@@ -13,7 +13,6 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Plan", requiresCheckup: true },
   { href: "/learn", label: "Learn", requiresCheckup: false },
   { href: "/tools", label: "Tools", requiresCheckup: false },
-  { href: "/coaching", label: "Coaching", requiresCheckup: false },
 ];
 
 export function AppNav() {

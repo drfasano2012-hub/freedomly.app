@@ -87,7 +87,7 @@ export default function ToolsPage() {
               <div className="mt-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
                 <p className="text-xs text-slate-500 leading-relaxed">
                   <span className="font-semibold text-slate-700">FIRE</span> = Financial Independence, Retire Early.{" "}
-                  <span className="font-semibold text-slate-700">Coast FIRE</span> is the point where your existing investments will compound to your full FI number by retirement age — without any additional contributions needed.
+                  <span className="font-semibold text-slate-700">Coast FIRE</span> is the point where your existing investments will compound to your full freedom number by retirement age — without any additional contributions needed.
                 </p>
               </div>
             )}

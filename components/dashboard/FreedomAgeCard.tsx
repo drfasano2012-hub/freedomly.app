@@ -170,7 +170,7 @@ export function FreedomAgeCard({
             50+ years out
           </div>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Your FI number is {formatCurrencyFull(active.fiNumber)}. Your current surplus is too small to close this gap in a reasonable timeline. Three levers accelerate it: grow your income, reduce monthly spending, or both. Adding $300/month to your surplus can cut a decade off this projection.
+            Your freedom number is {formatCurrencyFull(active.fiNumber)}. Your current surplus is too small to close this gap in a reasonable timeline. Three levers accelerate it: grow your income, reduce monthly spending, or both. Adding $300/month to your surplus can cut a decade off this projection.
           </p>
         </div>
       );
@@ -197,7 +197,7 @@ export function FreedomAgeCard({
           )}
         </div>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Your FI number is {formatCurrencyFull(active.fiNumber)} — 25× your annual spending. Your{" "}
+          Your freedom number is {formatCurrencyFull(active.fiNumber)} — what your portfolio needs to cover your spending forever. Your{" "}
           <span className="font-semibold text-emerald-700">{formatCurrencyFull(activeSurplus)}/month</span>{" "}
           invested at 7% annually gets you there in {active.yearsToFreedom} years. Every extra $100/month you free up pulls this date closer.
         </p>
@@ -292,7 +292,7 @@ export function FreedomAgeCard({
       {/* Secondary metrics */}
       <div className="border-t border-slate-200 pt-4 grid grid-cols-2 gap-4">
         <div>
-          <p className="text-xs text-slate-600 mb-0.5">FI number</p>
+          <p className="text-xs text-slate-600 mb-0.5">Freedom number</p>
           <p className="text-base font-semibold text-slate-700">
             {formatCurrencyFull(active.fiNumber)}
           </p>
@@ -308,7 +308,7 @@ export function FreedomAgeCard({
       </div>
 
       <p className="text-xs text-slate-500 leading-relaxed">
-        Assumes 7% real annual return, 4% safe withdrawal rate. FI number = 25× annual spending.
+        Assumes 7% real annual return, 4% safe withdrawal rate. Freedom number = 25× annual spending.
       </p>
     </div>
   );

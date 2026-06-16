@@ -75,7 +75,7 @@ function DebtCard({ inputs, metrics }: { inputs: UserInputs; metrics: FinancialM
         <>
           <div className="flex flex-col gap-2">
             <Row label="Total debt" value={formatCurrencyFull(totalDebt)} />
-            <Row label="Weighted avg rate" value={formatPercent(weightedAvgDebtRate, 1)} />
+            <Row label="Avg interest rate" value={formatPercent(weightedAvgDebtRate, 1)} />
             {highInterestDebt > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2 mt-1">
                 <AlertTriangle size={12} />

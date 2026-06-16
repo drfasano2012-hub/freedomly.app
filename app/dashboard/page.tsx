@@ -16,7 +16,6 @@ import { ActionPlan } from "@/components/dashboard/ActionPlan";
 import { PlanDiagnostics } from "@/components/dashboard/PlanDiagnostics";
 import { ProgressSection } from "@/components/dashboard/ProgressSection";
 import { SharpenPlan } from "@/components/dashboard/SharpenPlan";
-import { ContinueLearningCard } from "@/components/learn/ContinueLearningCard";
 import { MilestonesSection } from "@/components/dashboard/MilestonesSection";
 import { QuickUpdateCard } from "@/components/dashboard/QuickUpdateCard";
 
@@ -96,11 +95,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <SnapshotCards
-                metrics={metrics}
-                monthlyTakeHome={inputs.monthlyTakeHome}
-                currentAge={inputs.currentAge}
-              />
+              <SnapshotCards metrics={metrics} currentAge={inputs.currentAge} />
             </div>
           </div>
         </section>
@@ -136,12 +131,6 @@ export default function DashboardPage() {
             employmentType={inputs.employmentType ?? "w2"}
             householdType={inputs.householdType ?? "solo"}
           />
-        </section>
-
-        {/* Keep learning */}
-        <section className="flex flex-col gap-2">
-          <SectionLabel>Keep learning</SectionLabel>
-          <ContinueLearningCard breakdown={metrics.healthScoreBreakdown} />
         </section>
 
         {/* Your progress — compact pills at end */}

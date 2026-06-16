@@ -1,11 +1,9 @@
-import { TrendingUp, Wallet, Shield, BarChart3 } from "lucide-react";
-import { Badge, savingsRateColor, savingsRateLabel, emergencyFundColor, emergencyFundLabel } from "@/components/ui/Badge";
+import { TrendingUp, BarChart3 } from "lucide-react";
+import { Badge, savingsRateColor, savingsRateLabel } from "@/components/ui/Badge";
 import {
   formatCurrency,
   formatPercent,
   getSavingsRateTier,
-  getEmergencyFundTier,
-  getSurplusTier,
   getNetWorthTier,
   getFedMedian,
   peerPercentile,
@@ -14,20 +12,15 @@ import type { FinancialMetrics } from "@/lib/types";
 
 interface Props {
   metrics: FinancialMetrics;
-  monthlyTakeHome: number;
   currentAge: number;
 }
 
-export function SnapshotCards({ metrics, monthlyTakeHome, currentAge }: Props) {
-  const { savingsRate, monthlySurplus, emergencyFundMonths, netWorth, annualIncome } = metrics;
+export function SnapshotCards({ metrics, currentAge }: Props) {
+  const { savingsRate, netWorth, annualIncome } = metrics;
 
   const srTier = getSavingsRateTier(savingsRate);
-  const efTier = getEmergencyFundTier(emergencyFundMonths);
-  const surplusTier = getSurplusTier(monthlySurplus, monthlyTakeHome);
   const nwTier = getNetWorthTier(netWorth, annualIncome);
 
-  const surplusColor = surplusTier === "healthy" ? "green" : surplusTier === "thin" ? "neutral" : "red";
-  const surplusLabel = surplusTier === "healthy" ? "Healthy" : surplusTier === "thin" ? "Thin" : "Deficit";
   const nwColor = nwTier === "strong" ? "green" : nwTier === "positive" ? "neutral" : "red";
   const nwLabel = nwTier === "strong" ? "Strong" : nwTier === "positive" ? "Positive" : "Behind";
 
@@ -48,21 +41,6 @@ export function SnapshotCards({ metrics, monthlyTakeHome, currentAge }: Props) {
       label: "Savings Rate",
       value: formatPercent(savingsRate, 1),
       badge: <Badge label={savingsRateLabel(srTier)} color={savingsRateColor(srTier)} />,
-      sub: null,
-    },
-    {
-      icon: Wallet,
-      label: "Monthly Surplus",
-      value: `${monthlySurplus < 0 ? "-" : "+"}${formatCurrency(Math.abs(monthlySurplus))}`,
-      valueColor: monthlySurplus < 0 ? "text-red-600" : "text-slate-800",
-      badge: <Badge label={surplusLabel} color={surplusColor} />,
-      sub: null,
-    },
-    {
-      icon: Shield,
-      label: "Emergency Fund",
-      value: `${emergencyFundMonths.toFixed(1)} mo`,
-      badge: <Badge label={emergencyFundLabel(efTier)} color={emergencyFundColor(efTier)} />,
       sub: null,
     },
   ];
