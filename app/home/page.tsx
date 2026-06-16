@@ -11,7 +11,7 @@ import { AppNav } from "@/components/AppNav";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { calcAllMetrics, formatCurrency } from "@/lib/calculations";
 import { loadProgress, getRecommendedLesson, getLevelProgress, getStreak } from "@/lib/learn-progress";
-import { readHistory, recordSnapshot, type Snapshot } from "@/lib/history";
+import { readHistory, recordSnapshot, getCheckInStreak, type Snapshot } from "@/lib/history";
 import { track } from "@/lib/analytics";
 import type { LearnProgress } from "@/lib/types";
 
@@ -114,6 +114,7 @@ export default function HomePage() {
   const [learnProgress, setLearnProgress] = useState<LearnProgress>({ lessons: {}, xp: 0, weeklyActivity: [] });
   const [learnReady, setLearnReady] = useState(false);
   const [history, setHistory] = useState<Snapshot[]>([]);
+  const [checkInStreak, setCheckInStreak] = useState(0);
 
   useEffect(() => {
     if (hydrated && !hasCompletedCheckup) router.replace("/checkup");
@@ -128,8 +129,9 @@ export default function HomePage() {
     setLearnReady(true);
     // Read history THEN record today's snapshot
     const prior = readHistory();
-    recordSnapshot(metrics);
+    const updated = recordSnapshot(metrics);
     setHistory(prior);
+    setCheckInStreak(getCheckInStreak(updated));
     track("home_viewed");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, hasCompletedCheckup, !!metrics]);
@@ -163,9 +165,16 @@ export default function HomePage() {
       <main className="max-w-lg mx-auto px-4 sm:px-6 py-6 flex flex-col gap-5">
 
         {/* Greeting */}
-        <div>
-          <h1 className="text-xl font-bold text-white">{getGreeting()}</h1>
-          <p className="text-sm text-white/60 mt-0.5">Here's where your plan stands.</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-white">{getGreeting()}</h1>
+            <p className="text-sm text-white/60 mt-0.5">Here's where your plan stands.</p>
+          </div>
+          {checkInStreak > 1 && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-orange-300 bg-orange-400/10 border border-orange-400/20 rounded-full px-2.5 py-1 shrink-0">
+              <Flame size={12} /> {checkInStreak}-day streak
+            </span>
+          )}
         </div>
 
         {/* Hero: health score + freedom age */}

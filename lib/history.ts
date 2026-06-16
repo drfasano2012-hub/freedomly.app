@@ -122,6 +122,24 @@ export function progressSince(
   };
 }
 
+/** Consecutive calendar days (ending at the most recent snapshot) the user
+ *  has checked in. Call with the history AFTER today's snapshot is recorded. */
+export function getCheckInStreak(history: Snapshot[]): number {
+  if (history.length === 0) return 0;
+  let streak = 1;
+  for (let i = history.length - 1; i > 0; i--) {
+    const cur = new Date(history[i].date + "T00:00:00");
+    const prev = new Date(history[i - 1].date + "T00:00:00");
+    const diffDays = Math.round((cur.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
 // ─── Milestones ──────────────────────────────────────────────────────────────
 
 export interface Milestone {
