@@ -94,9 +94,9 @@ export function SharpenPlan({ inputs, setInputs }: Props) {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2">
           <p className="text-xs text-white/65">Investment risk:</p>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {RISK_OPTIONS.map((o) => (
               <button
                 key={o.value}
