@@ -146,7 +146,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* visual first on lg */}
           <div className="order-2 lg:order-1 flex items-center justify-center">
-            <PhoneFrame src="/screenshots/freedom-age-mobile.png" alt="Freedomly freedom age projection" />
+            <PhoneFrame src="/screenshots/simulator-mobile.png" alt="Freedomly freedom age simulator with sliders" />
           </div>
           <SectionHeading
             center={false}
@@ -166,7 +166,7 @@ export default function LandingPage() {
             title="Your highest-impact move, ranked"
             subtitle="Not generic advice — a prioritized plan built from your numbers, with the effect of each move on your freedom date."
           />
-          <PhoneFrame src="/screenshots/actions-mobile.png" alt="Freedomly action plan — your top financial moves" />
+          <PhoneFrame src="/screenshots/action-plan-mobile.png" alt="Freedomly action plan — your top financial moves" />
         </div>
       </section>
 
@@ -174,8 +174,52 @@ export default function LandingPage() {
       <section className="px-6 py-14 sm:py-20 border-t border-white/10">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* visual first on lg */}
-          <div className="order-2 lg:order-1 flex items-center justify-center">
-            <PhoneFrame src="/screenshots/home-scroll-mobile.png" alt="Freedomly home — net worth trend and progress over time" />
+          <div className="order-2 lg:order-1 bg-white/80 backdrop-blur-sm border border-white/60 shadow-2xl rounded-3xl p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                Month 3 — since your last visit
+              </p>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+                2 moves done
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Health score", val: "62 → 71", sub: "+9 pts" },
+                { label: "Freedom age", val: "56 → 54", sub: "2 yrs sooner" },
+                { label: "Net worth", val: "+$6,400", sub: "3 months" },
+              ].map((d) => (
+                <div key={d.label} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+                  <p className="text-xs text-slate-500 leading-tight">{d.label}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5 leading-tight">{d.val}</p>
+                  <p className="text-xs font-semibold text-emerald-600 mt-0.5">{d.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-end gap-2 h-16 px-1">
+              {[34, 42, 47, 55, 62, 74].map((h, i) => (
+                <div key={i} className="flex-1">
+                  <div
+                    className={`w-full rounded-t-md ${i === 5 ? "bg-emerald-500" : "bg-emerald-200"}`}
+                    style={{ height: `${h}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-start gap-3 bg-emerald-50/70 border border-emerald-200 rounded-xl px-4 py-3">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">→</span>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Your new next move</p>
+                <p className="text-sm font-semibold text-slate-900 leading-snug mt-0.5">
+                  Debt cleared — now redirect that $400/mo into investing
+                </p>
+              </div>
+            </div>
           </div>
 
           <SectionHeading
